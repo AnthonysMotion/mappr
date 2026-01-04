@@ -265,7 +265,7 @@ export function TripView({
           )}
         </div>
 
-        <div className="w-96 border-l bg-[hsl(var(--card))] overflow-y-auto">
+        <div className="w-96 border-l bg-card overflow-y-auto">
           <Tabs defaultValue="pins" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="pins" className="flex-1">
