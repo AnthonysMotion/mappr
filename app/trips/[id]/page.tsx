@@ -61,9 +61,9 @@ export default async function TripDetailPage({
     .order("created_at", { ascending: true })
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
       <Navbar trip={trip} userRole={role} />
-      <main className="flex-1 pt-24">
+      <main className="flex-1 pt-16 overflow-hidden">
         <TripView
           trip={trip}
           pins={pins || []}

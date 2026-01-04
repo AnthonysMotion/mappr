@@ -28,11 +28,11 @@ export default async function TripsPage() {
     .order("created_at", { ascending: false })
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
       <Navbar />
-      <main className="flex-1 pt-24">
-        <div className="container mx-auto py-8 px-4">
-          <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 pt-24 overflow-hidden flex flex-col">
+        <div className="container mx-auto py-8 px-4 flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between mb-8 shrink-0">
             <div>
               <h1 className="text-3xl font-bold">My Trips</h1>
               <p className="text-muted-foreground mt-1">
@@ -46,7 +46,9 @@ export default async function TripsPage() {
               </Button>
             </Link>
           </div>
-          <TripsList trips={trips || []} />
+          <div className="flex-1 overflow-y-auto">
+            <TripsList trips={trips || []} />
+          </div>
         </div>
       </main>
       <Footer />

@@ -73,7 +73,7 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md">
         <div className={isTripsPage ? "px-4 md:px-8" : "container mx-auto px-4 md:px-8"}>
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
               {isTripDetailPage && trip ? (
                 <>
                   <Link href="/trips">
@@ -102,18 +102,6 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
                     {trip.description && (
                       <p className="text-xs text-muted-foreground line-clamp-1">{trip.description}</p>
                     )}
-                    {(trip.start_date || trip.end_date) && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {trip.start_date && format(parseISO(trip.start_date), "MMM d, yyyy")}
-                          {trip.start_date && trip.end_date && " to "}
-                          {trip.end_date && format(parseISO(trip.end_date), "MMM d, yyyy")}
-                          {trip.start_date && !trip.end_date && " onwards"}
-                          {!trip.start_date && trip.end_date && `Until ${format(parseISO(trip.end_date), "MMM d, yyyy")}`}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </>
               ) : (
@@ -123,7 +111,22 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
               )}
             </div>
 
-            <div className="hidden md:flex items-center gap-4">
+            {isTripDetailPage && trip && (trip.start_date || trip.end_date) && (
+              <div className="hidden md:flex items-center justify-center flex-1">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {trip.start_date && format(parseISO(trip.start_date), "MMM d, yyyy")}
+                    {trip.start_date && trip.end_date && " to "}
+                    {trip.end_date && format(parseISO(trip.end_date), "MMM d, yyyy")}
+                    {trip.start_date && !trip.end_date && " onwards"}
+                    {!trip.start_date && trip.end_date && `Until ${format(parseISO(trip.end_date), "MMM d, yyyy")}`}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
               {isTripDetailPage && trip && (
                 <Button
                   variant="outline"

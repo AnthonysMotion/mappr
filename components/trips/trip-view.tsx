@@ -309,7 +309,7 @@ export function TripView({
       : [0, 0]
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative">
           <ClickableMap
@@ -575,12 +575,12 @@ export function TripView({
                 {tripDays.map((tripDay) => {
                   const dayPins = pinsByDay[tripDay.day] || []
                   return (
-                    <Card key={tripDay.day} className="w-64 shrink-0 h-full flex flex-col">
-                      <CardHeader className="pb-2">
+                    <Card key={tripDay.day} className="min-w-80 shrink-0 h-full flex flex-col">
+                      <CardHeader className="pb-2 shrink-0">
                         <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                           <Calendar className="h-4 w-4" />
                           <span>Day {tripDay.day}</span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="secondary" className="text-xs">
                             {tripDay.dateStr}
                           </Badge>
                           {dayPins.length > 0 && (
@@ -590,19 +590,89 @@ export function TripView({
                           )}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="flex-1 overflow-hidden space-y-2">
+                      <CardContent className="flex-1 overflow-x-auto overflow-y-hidden">
                         {dayPins.length === 0 ? (
                           <p className="text-xs text-muted-foreground py-2">
                             No pins scheduled. {canEdit && "Add pins and assign them to this day."}
                           </p>
                         ) : (
-                          dayPins.map((pin) => {
+                          <div className="flex gap-2 h-full">
+                            {dayPins.map((pin) => {
+                              const category = pin.categories
+                              const isSelected = selectedPin?.id === pin.id
+                              return (
+                                <Card
+                                  key={pin.id}
+                                  className={`transition-colors cursor-pointer shrink-0 w-48 ${
+                                    isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
+                                  }`}
+                                  onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                >
+                                  <CardContent className="p-2">
+                                    <div className="flex items-start gap-2">
+                                      <div
+                                        className="h-2 w-2 rounded-full flex-shrink-0 mt-1 border border-border"
+                                        style={{ backgroundColor: category?.color || "#3b82f6" }}
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                          {pin.time && (
+                                            <span className="text-xs font-medium text-muted-foreground">
+                                              {pin.time}
+                                            </span>
+                                          )}
+                                          {category && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs px-1 py-0"
+                                              style={{
+                                                borderColor: category.color,
+                                                color: category.color,
+                                              }}
+                                            >
+                                              {category.name}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <h4 className="font-medium text-xs leading-tight line-clamp-1">
+                                          {pin.name}
+                                        </h4>
+                                        {pin.description && (
+                                          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                            {pin.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+                {pins.filter((p) => !p.day).length > 0 && (
+                  <Card className="min-w-80 shrink-0 h-full flex flex-col">
+                    <CardHeader className="pb-2 shrink-0">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Unscheduled ({pins.filter((p) => !p.day).length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-x-auto overflow-y-hidden">
+                      <div className="flex gap-2 h-full">
+                        {pins
+                          .filter((p) => !p.day)
+                          .map((pin) => {
                             const category = pin.categories
                             const isSelected = selectedPin?.id === pin.id
                             return (
                               <Card
                                 key={pin.id}
-                                className={`transition-colors cursor-pointer ${
+                                className={`transition-colors cursor-pointer shrink-0 w-48 ${
                                   isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
                                 }`}
                                 onClick={() => setSelectedPin(isSelected ? null : pin)}
@@ -614,25 +684,6 @@ export function TripView({
                                       style={{ backgroundColor: category?.color || "#3b82f6" }}
                                     />
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1.5 mb-1">
-                                        {pin.time && (
-                                          <span className="text-xs font-medium text-muted-foreground">
-                                            {pin.time}
-                                          </span>
-                                        )}
-                                        {category && (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs px-1 py-0"
-                                            style={{
-                                              borderColor: category.color,
-                                              color: category.color,
-                                            }}
-                                          >
-                                            {category.name}
-                                          </Badge>
-                                        )}
-                                      </div>
                                       <h4 className="font-medium text-xs leading-tight line-clamp-1">
                                         {pin.name}
                                       </h4>
@@ -646,55 +697,8 @@ export function TripView({
                                 </CardContent>
                               </Card>
                             )
-                          })
-                        )}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-                {pins.filter((p) => !p.day).length > 0 && (
-                  <Card className="w-64 shrink-0 h-full flex flex-col">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Unscheduled ({pins.filter((p) => !p.day).length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-hidden space-y-2">
-                      {pins
-                        .filter((p) => !p.day)
-                        .map((pin) => {
-                          const category = pin.categories
-                          const isSelected = selectedPin?.id === pin.id
-                          return (
-                            <Card
-                              key={pin.id}
-                              className={`transition-colors cursor-pointer ${
-                                isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                              }`}
-                              onClick={() => setSelectedPin(isSelected ? null : pin)}
-                            >
-                              <CardContent className="p-2">
-                                <div className="flex items-start gap-2">
-                                  <div
-                                    className="h-2 w-2 rounded-full flex-shrink-0 mt-1 border border-border"
-                                    style={{ backgroundColor: category?.color || "#3b82f6" }}
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-xs leading-tight line-clamp-1">
-                                      {pin.name}
-                                    </h4>
-                                    {pin.description && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                                        {pin.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )
-                        })}
+                          })}
+                      </div>
                     </CardContent>
                   </Card>
                 )}
