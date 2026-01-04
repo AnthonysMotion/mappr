@@ -39,6 +39,7 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
   const supabase = createClient()
   
   const isTripDetailPage = pathname?.startsWith("/trips/") && pathname !== "/trips" && pathname !== "/trips/new"
+  const isTripsPage = pathname === "/trips" || (pathname?.startsWith("/trips/") && pathname !== "/trips/new")
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -70,7 +71,7 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md">
-        <div className="container mx-auto px-4 md:px-8">
+        <div className={isTripsPage ? "px-4 md:px-8" : "container mx-auto px-4 md:px-8"}>
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               {isTripDetailPage && trip ? (
@@ -207,7 +208,7 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
 
         {mobileMenuOpen && (
           <div className="border-t md:hidden">
-            <div className="container mx-auto px-4 py-4 space-y-4">
+            <div className={isTripsPage ? "px-4 py-4 space-y-4" : "container mx-auto px-4 py-4 space-y-4"}>
               {isTripDetailPage && trip && (
                 <div className="pb-4 border-b">
                   <div className="flex items-start justify-between gap-2 mb-1">

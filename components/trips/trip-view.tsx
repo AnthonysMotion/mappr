@@ -14,7 +14,7 @@ import { PinViewDialog } from "@/components/pins/pin-view-dialog"
 import { PinEditDialog } from "@/components/pins/pin-edit-dialog"
 import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
-import { Calendar, MoreVertical, Edit, Tag, Trash2, Clock } from "lucide-react"
+import { Calendar, MoreVertical, Edit, Tag, Trash2, Clock, ChevronUp, ChevronDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +79,7 @@ export function TripView({
   const [mapClickLocation, setMapClickLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [pinDialogInitialName, setPinDialogInitialName] = useState<string | undefined>(undefined)
   const [flyToLocation, setFlyToLocation] = useState<[number, number] | null>(null)
+  const [timelineExpanded, setTimelineExpanded] = useState(false)
   const supabase = createClient()
 
   const canEdit = userRole === "owner" || userRole === "editor"
@@ -255,7 +256,7 @@ export function TripView({
     if (!trip.start_date || !trip.end_date) return []
     const start = new Date(trip.start_date)
     const end = new Date(trip.end_date)
-    const days: { day: number; date: Date; label: string }[] = []
+    const days: { day: number; date: Date; dateStr: string }[] = []
     let currentDate = new Date(start)
     let dayNum = 1
     
@@ -267,7 +268,7 @@ export function TripView({
       days.push({ 
         day: dayNum, 
         date: new Date(currentDate), 
-        label: `Day ${dayNum} - ${dateStr}` 
+        dateStr: dateStr
       })
       currentDate.setDate(currentDate.getDate() + 1)
       dayNum++
@@ -399,10 +400,6 @@ export function TripView({
               <TabsTrigger value="pins" className="flex-1">
                 Pins ({pins.length})
               </TabsTrigger>
-              <TabsTrigger value="timeline" className="flex-1">
-                <Calendar className="h-4 w-4 mr-1.5" />
-                Timeline
-              </TabsTrigger>
               {canEdit && (
                 <TabsTrigger value="categories" className="flex-1">
                   Categories
@@ -519,279 +516,6 @@ export function TripView({
                 })
               )}
             </TabsContent>
-            <TabsContent value="timeline" className="flex-1 overflow-y-auto p-4 space-y-4 m-0">
-              {!trip.start_date || !trip.end_date ? (
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground">
-                    <p className="mb-2">No trip dates set.</p>
-                    <p className="text-xs">Set start and end dates for your trip to see the timeline.</p>
-                  </CardContent>
-                </Card>
-              ) : tripDays.length === 0 ? (
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground">
-                    Invalid trip dates. Please check your trip settings.
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {tripDays.map((tripDay) => {
-                    const dayPins = pinsByDay[tripDay.day] || []
-                    return (
-                      <Card key={tripDay.day}>
-                        <CardHeader>
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            {tripDay.label}
-                            {dayPins.length > 0 && (
-                              <span className="text-xs font-normal text-muted-foreground">
-                                ({dayPins.length} {dayPins.length === 1 ? 'pin' : 'pins'})
-                              </span>
-                            )}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          {dayPins.length === 0 ? (
-                            <p className="text-xs text-muted-foreground py-2">
-                              No pins scheduled for this day. {canEdit && "Add pins and assign them to this day."}
-                            </p>
-                          ) : (
-                            dayPins.map((pin) => {
-                              const category = pin.categories
-                              const isSelected = selectedPin?.id === pin.id
-                              return (
-                                <Card
-                                  key={pin.id}
-                                  className={`transition-colors ${
-                                    isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                                  }`}
-                                >
-                                  <CardContent className="p-3">
-                                    <div className="flex items-start gap-2">
-                                      <div
-                                        className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                        style={{ backgroundColor: category?.color || "#3b82f6" }}
-                                      />
-                                      <div 
-                                        className="flex-1 min-w-0 cursor-pointer"
-                                        onClick={() => setSelectedPin(isSelected ? null : pin)}
-                                      >
-                                        <div className="flex items-center gap-2 mb-1">
-                                          {pin.time && (
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                              <Clock className="h-3 w-3" />
-                                              <span className="font-medium">{pin.time}</span>
-                                            </div>
-                                          )}
-                                          {category && (
-                                            <Badge
-                                              variant="outline"
-                                              className="text-xs"
-                                              style={{
-                                                borderColor: category.color,
-                                                color: category.color,
-                                              }}
-                                            >
-                                              {category.name}
-                                            </Badge>
-                                          )}
-                                        </div>
-                                        <h4 className="font-medium text-sm leading-tight line-clamp-1">
-                                          {pin.name}
-                                        </h4>
-                                        {pin.description && (
-                                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                            {pin.description}
-                                          </p>
-                                        )}
-                                      </div>
-                                      {canEdit && (
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-7 w-7 shrink-0"
-                                              onClick={(e) => e.stopPropagation()}
-                                            >
-                                              <MoreVertical className="h-3.5 w-3.5" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={(e) => {
-                                              e.stopPropagation()
-                                              handleEditPin(pin)
-                                            }}>
-                                              <Edit className="h-4 w-4 mr-2" />
-                                              Edit Pin
-                                            </DropdownMenuItem>
-                                            {categories.length > 0 && (
-                                              <>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  handleChangeCategory(pin, null)
-                                                }}>
-                                                  <Tag className="h-4 w-4 mr-2" />
-                                                  Remove Category
-                                                </DropdownMenuItem>
-                                                {categories.map((cat) => (
-                                                  <DropdownMenuItem
-                                                    key={cat.id}
-                                                    onClick={(e) => {
-                                                      e.stopPropagation()
-                                                      handleChangeCategory(pin, cat.id)
-                                                    }}
-                                                  >
-                                                    <div className="flex items-center gap-2">
-                                                      <div
-                                                        className="h-2 w-2 rounded-full"
-                                                        style={{ backgroundColor: cat.color }}
-                                                      />
-                                                      {cat.name}
-                                                    </div>
-                                                  </DropdownMenuItem>
-                                                ))}
-                                              </>
-                                            )}
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                handlePinDelete(pin.id)
-                                              }}
-                                              className="text-destructive"
-                                            >
-                                              <Trash2 className="h-4 w-4 mr-2" />
-                                              Delete Pin
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      )}
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              )
-                            })
-                          )}
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                  {pins.filter((p) => !p.day).length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          Unscheduled ({pins.filter((p) => !p.day).length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {pins
-                          .filter((p) => !p.day)
-                          .map((pin) => {
-                            const category = pin.categories
-                            const isSelected = selectedPin?.id === pin.id
-                            return (
-                              <Card
-                                key={pin.id}
-                                className={`transition-colors ${
-                                  isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                                }`}
-                              >
-                                <CardContent className="p-3">
-                                  <div className="flex items-start gap-2">
-                                    <div
-                                      className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                      style={{ backgroundColor: category?.color || "#3b82f6" }}
-                                    />
-                                    <div 
-                                      className="flex-1 min-w-0 cursor-pointer"
-                                      onClick={() => setSelectedPin(isSelected ? null : pin)}
-                                    >
-                                      <h4 className="font-medium text-sm leading-tight line-clamp-1">
-                                        {pin.name}
-                                      </h4>
-                                      {pin.description && (
-                                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                          {pin.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                    {canEdit && (
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 shrink-0"
-                                            onClick={(e) => e.stopPropagation()}
-                                          >
-                                            <MoreVertical className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleEditPin(pin)
-                                          }}>
-                                            <Edit className="h-4 w-4 mr-2" />
-                                            Edit Pin
-                                          </DropdownMenuItem>
-                                          {categories.length > 0 && (
-                                            <>
-                                              <DropdownMenuSeparator />
-                                              <DropdownMenuItem onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleChangeCategory(pin, null)
-                                              }}>
-                                                <Tag className="h-4 w-4 mr-2" />
-                                                Remove Category
-                                              </DropdownMenuItem>
-                                              {categories.map((cat) => (
-                                                <DropdownMenuItem
-                                                  key={cat.id}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleChangeCategory(pin, cat.id)
-                                                  }}
-                                                >
-                                                  <div className="flex items-center gap-2">
-                                                    <div
-                                                      className="h-2 w-2 rounded-full"
-                                                      style={{ backgroundColor: cat.color }}
-                                                    />
-                                                    {cat.name}
-                                                  </div>
-                                                </DropdownMenuItem>
-                                              ))}
-                                            </>
-                                          )}
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              handlePinDelete(pin.id)
-                                            }}
-                                            className="text-destructive"
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" />
-                                            Delete Pin
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            )
-                          })}
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </TabsContent>
             {canEdit && (
               <TabsContent value="categories" className="flex-1 overflow-y-auto p-4 m-0">
                 <CategoryManager
@@ -806,6 +530,178 @@ export function TripView({
             )}
           </Tabs>
         </div>
+      </div>
+
+      {/* Timeline Bottom Bar */}
+      <div className={`border-t bg-card transition-all duration-300 ${timelineExpanded ? 'h-64' : 'h-12'}`}>
+        <div className="flex items-center justify-between h-12 px-4 border-b">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="font-medium">Timeline</span>
+            {trip.start_date && trip.end_date && tripDays.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                ({tripDays.length} {tripDays.length === 1 ? 'day' : 'days'})
+              </span>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setTimelineExpanded(!timelineExpanded)}
+          >
+            {timelineExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronUp className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {timelineExpanded && (
+          <div className="h-[calc(16rem-3rem)] overflow-x-auto overflow-y-hidden p-4">
+            {!trip.start_date || !trip.end_date ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <p className="mb-2">No trip dates set.</p>
+                  <p className="text-xs">Set start and end dates for your trip to see the timeline.</p>
+                </div>
+              </div>
+            ) : tripDays.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                Invalid trip dates. Please check your trip settings.
+              </div>
+            ) : (
+              <div className="flex gap-4 h-full">
+                {tripDays.map((tripDay) => {
+                  const dayPins = pinsByDay[tripDay.day] || []
+                  return (
+                    <Card key={tripDay.day} className="w-64 shrink-0 h-full flex flex-col">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                          <Calendar className="h-4 w-4" />
+                          <span>Day {tripDay.day}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {tripDay.dateStr}
+                          </Badge>
+                          {dayPins.length > 0 && (
+                            <span className="text-xs font-normal text-muted-foreground">
+                              ({dayPins.length})
+                            </span>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1 overflow-hidden space-y-2">
+                        {dayPins.length === 0 ? (
+                          <p className="text-xs text-muted-foreground py-2">
+                            No pins scheduled. {canEdit && "Add pins and assign them to this day."}
+                          </p>
+                        ) : (
+                          dayPins.map((pin) => {
+                            const category = pin.categories
+                            const isSelected = selectedPin?.id === pin.id
+                            return (
+                              <Card
+                                key={pin.id}
+                                className={`transition-colors cursor-pointer ${
+                                  isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
+                                }`}
+                                onClick={() => setSelectedPin(isSelected ? null : pin)}
+                              >
+                                <CardContent className="p-2">
+                                  <div className="flex items-start gap-2">
+                                    <div
+                                      className="h-2 w-2 rounded-full flex-shrink-0 mt-1 border border-border"
+                                      style={{ backgroundColor: category?.color || "#3b82f6" }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        {pin.time && (
+                                          <span className="text-xs font-medium text-muted-foreground">
+                                            {pin.time}
+                                          </span>
+                                        )}
+                                        {category && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs px-1 py-0"
+                                            style={{
+                                              borderColor: category.color,
+                                              color: category.color,
+                                            }}
+                                          >
+                                            {category.name}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <h4 className="font-medium text-xs leading-tight line-clamp-1">
+                                        {pin.name}
+                                      </h4>
+                                      {pin.description && (
+                                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                          {pin.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          })
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+                {pins.filter((p) => !p.day).length > 0 && (
+                  <Card className="w-64 shrink-0 h-full flex flex-col">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Unscheduled ({pins.filter((p) => !p.day).length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-hidden space-y-2">
+                      {pins
+                        .filter((p) => !p.day)
+                        .map((pin) => {
+                          const category = pin.categories
+                          const isSelected = selectedPin?.id === pin.id
+                          return (
+                            <Card
+                              key={pin.id}
+                              className={`transition-colors cursor-pointer ${
+                                isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
+                              }`}
+                              onClick={() => setSelectedPin(isSelected ? null : pin)}
+                            >
+                              <CardContent className="p-2">
+                                <div className="flex items-start gap-2">
+                                  <div
+                                    className="h-2 w-2 rounded-full flex-shrink-0 mt-1 border border-border"
+                                    style={{ backgroundColor: category?.color || "#3b82f6" }}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-xs leading-tight line-clamp-1">
+                                      {pin.name}
+                                    </h4>
+                                    {pin.description && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                        {pin.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <PinDialog
