@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Map, MapMarker, MarkerContent, MarkerPopup, MapControls, MapRoute } from "@/components/ui/map"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Route, Calendar, Clock, X, Search } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Route, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { LocationSearch } from "@/components/pins/location-search"
 import {
   Dialog,
@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// Demo data - fake pins and categories for showcase
 const demoCategories = [
   { id: "1", name: "Restaurants", color: "#ef4444" },
   { id: "2", name: "Attractions", color: "#3b82f6" },
@@ -35,9 +34,7 @@ const demoCategories = [
   { id: "4", name: "Shopping", color: "#f59e0b" },
 ]
 
-// Expanded demo pins to make it look like a real trip
 const initialDemoPins = [
-  // Day 1 - Arrival & Central Tokyo
   {
     id: "1",
     name: "Narita Airport",
@@ -93,7 +90,6 @@ const initialDemoPins = [
     day: 1,
     time: "19:00",
   },
-  // Day 2 - Cultural & Modern Tokyo
   {
     id: "6",
     name: "Senso-ji Temple",
@@ -149,7 +145,6 @@ const initialDemoPins = [
     day: 2,
     time: "18:00",
   },
-  // Day 3 - Nature & Relaxation
   {
     id: "11",
     name: "Meiji Shrine",
@@ -196,17 +191,16 @@ const initialDemoPins = [
   },
 ]
 
-// Demo routes connecting pins
 const demoRoutes = [
   {
     id: "route1",
     name: "Day 1 Itinerary",
     coordinates: [
-      [140.3929, 35.7720], // Narita Airport
-      [139.7306, 35.6586], // Park Hyatt
-      [139.7706, 35.6654], // Tsukiji Market
-      [139.7659, 35.6719], // Ginza
-      [139.7454, 35.6586], // Sushi Saito
+      [140.3929, 35.7720],
+      [139.7306, 35.6586],
+      [139.7706, 35.6654],
+      [139.7659, 35.6719],
+      [139.7454, 35.6586],
     ],
     color: "#3b82f6",
   },
@@ -214,11 +208,11 @@ const demoRoutes = [
     id: "route2",
     name: "Day 2 Cultural Tour",
     coordinates: [
-      [139.7967, 35.7148], // Senso-ji
-      [139.8107, 35.7101], // Tokyo Skytree
-      [139.7734, 35.7142], // Ueno Park
-      [139.7731, 35.6984], // Akihabara
-      [139.7006, 35.6598], // Shibuya
+      [139.7967, 35.7148],
+      [139.8107, 35.7101],
+      [139.7734, 35.7142],
+      [139.7731, 35.6984],
+      [139.7006, 35.6598],
     ],
     color: "#10b981",
   },
@@ -226,10 +220,10 @@ const demoRoutes = [
     id: "route3",
     name: "Day 3 Exploration",
     coordinates: [
-      [139.6993, 35.6764], // Meiji Shrine
-      [139.7026, 35.6702], // Harajuku
-      [139.7314, 35.6586], // Roppongi Hills
-      [139.7454, 35.6586], // Tokyo Tower
+      [139.6993, 35.6764],
+      [139.7026, 35.6702],
+      [139.7314, 35.6586],
+      [139.7454, 35.6586],
     ],
     color: "#f59e0b",
   },
@@ -265,7 +259,7 @@ export function InteractiveMapDemo() {
     ? pins.filter((pin) => pin.category_id === selectedCategory)
     : pins
 
-  const mapCenter: [number, number] = [139.75, 35.68] // Tokyo center
+  const mapCenter: [number, number] = [139.75, 35.68]
 
   const activeRoutes = selectedRoute
     ? demoRoutes.filter((route) => route.id === selectedRoute)
@@ -273,13 +267,14 @@ export function InteractiveMapDemo() {
     ? demoRoutes
     : []
 
-  // Group pins by day for timeline
-  const pinsByDay = pins.reduce((acc, pin) => {
-    const day = pin.day || 0
-    if (!acc[day]) acc[day] = []
-    acc[day].push(pin)
-    return acc
-  }, {} as Record<number, Pin[]>)
+  const pinsByDay = useMemo(() => {
+    return pins.reduce((acc, pin) => {
+      const day = pin.day || 0
+      if (!acc[day]) acc[day] = []
+      acc[day].push(pin)
+      return acc
+    }, {} as Record<number, Pin[]>)
+  }, [pins])
 
   const handleLocationSelect = (location: { name: string; lat: number; lng: number }) => {
     setSelectedLocation(location)
@@ -313,218 +308,167 @@ export function InteractiveMapDemo() {
   }
 
   return (
-    <div className="w-full">
-      {/* Map Container with Overlay Controls */}
-      <motion.div 
-        className="relative w-full h-[600px] rounded-2xl overflow-hidden border border-white/10 bg-black mb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-            <Map center={mapCenter} zoom={11}>
-              <MapControls showZoom />
-              
-              {/* Routes with animation */}
+    <div className="w-full space-y-6">
+      <div className="relative w-full h-[600px] rounded-lg overflow-hidden border">
+        <Map center={mapCenter} zoom={11}>
+          <MapControls showZoom />
+
+          <AnimatePresence>
+            {activeRoutes.map((route) => (
+              <motion.div
+                key={route.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <MapRoute
+                  coordinates={route.coordinates}
+                  color={route.color}
+                  width={4}
+                  opacity={0.7}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {filteredPins.map((pin) => {
+            const category = pin.categories
+            const isSelected = selectedPin === pin.id
+            return (
+              <MapMarker
+                key={pin.id}
+                longitude={pin.longitude}
+                latitude={pin.latitude}
+              >
+                <MarkerContent>
+                  <div
+                    className={`h-5 w-5 rounded-full border-2 border-white cursor-pointer ${
+                      isSelected ? "ring-2 ring-white" : ""
+                    }`}
+                    style={{
+                      backgroundColor: category?.color || "#3b82f6",
+                    }}
+                    onClick={() => setSelectedPin(isSelected ? null : pin.id)}
+                  />
+                </MarkerContent>
+                <MarkerPopup>
+                  <div className="space-y-2 min-w-[200px]">
+                    <h3 className="font-semibold">{pin.name}</h3>
+                    {pin.description && (
+                      <p className="text-sm text-muted-foreground">{pin.description}</p>
+                    )}
+                    {pin.day && pin.time && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        Day {pin.day} • {pin.time}
+                      </div>
+                    )}
+                    {category && (
+                      <Badge
+                        style={{
+                          backgroundColor: category.color,
+                          color: "white",
+                        }}
+                      >
+                        {category.name}
+                      </Badge>
+                    )}
+                  </div>
+                </MarkerPopup>
+              </MapMarker>
+            )
+          })}
+        </Map>
+
+        <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center gap-2">
+          <Card>
+            <CardContent className="p-3">
+              <LocationSearch
+                onLocationSelect={handleLocationSelect}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-2 flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => {
+                  setShowRoutes(!showRoutes)
+                  setSelectedRoute(null)
+                }}
+                variant={showRoutes ? "default" : "outline"}
+                size="sm"
+              >
+                <Route className="h-3 w-3 mr-1.5" />
+                {showRoutes ? "Hide Routes" : "Routes"}
+              </Button>
+
               <AnimatePresence>
-                {activeRoutes.map((route) => (
+                {showRoutes && (
                   <motion.div
-                    key={route.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
+                    className="flex flex-wrap items-center gap-2"
                   >
-                    <MapRoute
-                      coordinates={route.coordinates}
-                      color={route.color}
-                      width={4}
-                      opacity={0.7}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {/* Pins */}
-              {filteredPins.map((pin) => {
-                const category = pin.categories
-                const isSelected = selectedPin === pin.id
-                return (
-                  <MapMarker
-                    key={pin.id}
-                    longitude={pin.longitude}
-                    latitude={pin.latitude}
-                  >
-                    <MarkerContent>
-                      <div
-                        className={`h-5 w-5 rounded-full border-2 border-white cursor-pointer transition-all ${
-                          isSelected ? "ring-2 ring-white" : ""
-                        }`}
-                        style={{
-                          backgroundColor: category?.color || "#3b82f6",
-                        }}
-                        onClick={() => setSelectedPin(isSelected ? null : pin.id)}
-                      />
-                    </MarkerContent>
-                    <MarkerPopup>
-                      <div className="space-y-2 min-w-[200px]">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-white">{pin.name}</h3>
-                            {pin.description && (
-                              <p className="text-sm text-white/70 mt-1">{pin.description}</p>
-                            )}
-                            {pin.day && pin.time && (
-                              <div className="flex items-center gap-1 mt-2 text-xs text-white/60">
-                                <Clock className="h-3 w-3" />
-                                Day {pin.day} • {pin.time}
-                              </div>
-                            )}
-                            {category && (
-                              <Badge
-                                className="mt-2"
-                                style={{
-                                  backgroundColor: category.color,
-                                  color: "white",
-                                }}
-                              >
-                                {category.name}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </MarkerPopup>
-                  </MapMarker>
-                )
-              })}
-            </Map>
-
-            {/* Overlay Controls - Bottom */}
-            <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center gap-2">
-              {/* Search Bar */}
-              <div className="w-80 bg-black/80 backdrop-blur-md rounded-lg p-3 border border-white/10">
-                <LocationSearch
-                  onLocationSelect={handleLocationSelect}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Route Controls */}
-              <motion.div 
-                className="flex flex-wrap items-center gap-2 bg-black/80 backdrop-blur-md rounded-lg border border-white/10 overflow-hidden"
-                animate={{
-                  padding: showRoutes ? "0.75rem" : "0.5rem",
-                  minWidth: showRoutes ? "auto" : "auto",
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button
-                  onClick={() => {
-                    setShowRoutes(!showRoutes)
-                    setSelectedRoute(null)
-                  }}
-                  variant={showRoutes ? "default" : "outline"}
-                  size="sm"
-                  className={`rounded-full text-xs transition-all ${
-                    showRoutes
-                      ? "bg-white text-black hover:bg-white/90 h-8 px-4"
-                      : "bg-white/10 border-white/20 text-white hover:bg-white/20 h-7 px-3"
-                  }`}
-                >
-                  <Route className={`${showRoutes ? "h-3 w-3 mr-1.5" : "h-3 w-3 mr-1"}`} />
-                  {showRoutes ? "Hide" : "Routes"}
-                </Button>
-                
-                <AnimatePresence mode="popLayout">
-                  {showRoutes && (
-                    <motion.div
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex flex-wrap items-center gap-2"
+                    <Button
+                      onClick={() => setSelectedRoute(null)}
+                      variant={selectedRoute === null ? "default" : "outline"}
+                      size="sm"
                     >
+                      All
+                    </Button>
+                    {demoRoutes.map((route) => (
                       <Button
-                        onClick={() => setSelectedRoute(null)}
-                        variant={selectedRoute === null ? "default" : "outline"}
+                        key={route.id}
+                        onClick={() => setSelectedRoute(route.id)}
+                        variant={selectedRoute === route.id ? "default" : "outline"}
                         size="sm"
-                        className={`rounded-full text-xs h-8 ${
-                          selectedRoute === null
-                            ? "bg-white text-black hover:bg-white/90"
-                            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                        }`}
+                        className="flex items-center gap-1.5"
                       >
-                        All
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: route.color }}
+                        />
+                        {route.name}
                       </Button>
-                      {demoRoutes.map((route, index) => (
-                        <motion.div
-                          key={route.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ 
-                            duration: 0.2,
-                            delay: index * 0.05 
-                          }}
-                        >
-                          <Button
-                            onClick={() => setSelectedRoute(route.id)}
-                            variant={selectedRoute === route.id ? "default" : "outline"}
-                            size="sm"
-                            className={`rounded-full text-xs h-8 flex items-center gap-1.5 ${
-                              selectedRoute === route.id
-                                ? "bg-white text-black hover:bg-white/90"
-                                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                            }`}
-                          >
-                            <div
-                              className="h-2 w-2 rounded-full"
-                              style={{ backgroundColor: route.color }}
-                            />
-                            {route.name}
-                          </Button>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </CardContent>
+          </Card>
 
-              {/* Category Filter */}
-              <div className="flex flex-wrap items-center gap-2 bg-black/80 backdrop-blur-md rounded-lg p-3 border border-white/10">
-                <span className="text-xs font-medium text-white/60 mr-1">Filter:</span>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all h-7 ${
-                    selectedCategory === null
-                      ? "bg-white text-black"
-                      : "bg-white/10 text-white/70 hover:bg-white/20"
-                  }`}
+          <Card>
+            <CardContent className="p-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Filter:</span>
+              <Button
+                onClick={() => setSelectedCategory(null)}
+                variant={selectedCategory === null ? "default" : "outline"}
+                size="sm"
+              >
+                All
+              </Button>
+              {demoCategories.map((category) => (
+                <Button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  variant={selectedCategory === category.id ? "default" : "outline"}
+                  size="sm"
+                  className="flex items-center gap-1.5"
                 >
-                  All
-                </button>
-                {demoCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 h-7 ${
-                      selectedCategory === category.id
-                        ? "bg-white text-black"
-                        : "bg-white/10 text-white/70 hover:bg-white/20"
-                    }`}
-                  >
-                    <div
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  {category.name}
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-      {/* Timeline - Always shown below map */}
       <div className="space-y-4">
         {Object.keys(pinsByDay)
           .sort((a, b) => parseInt(a) - parseInt(b))
@@ -536,59 +480,54 @@ export function InteractiveMapDemo() {
               })
 
             return (
-              <motion.div
-                key={day}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-white/5 border border-white/10 rounded-lg p-4"
-              >
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Day {day}
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {dayPins.map((pin, index) => {
-                    const category = pin.categories
-                    return (
-                      <motion.div
-                        key={pin.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.05 }}
-                        className={`flex items-start gap-2 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer ${
-                          selectedPin === pin.id ? "ring-2 ring-white/50 bg-white/10" : ""
-                        }`}
-                        onClick={() => setSelectedPin(selectedPin === pin.id ? null : pin.id)}
-                      >
+              <Card key={day}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    Day {day}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {dayPins.map((pin) => {
+                      const category = pin.categories
+                      return (
                         <div
-                          className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-white/20"
-                          style={{ backgroundColor: category?.color || "#3b82f6" }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <h4 className="font-medium text-white text-xs leading-tight line-clamp-1">
-                              {pin.name}
-                            </h4>
-                            {pin.time && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                                {pin.time}
-                              </Badge>
+                          key={pin.id}
+                          className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPin === pin.id ? "ring-2 ring-primary" : ""
+                          }`}
+                          onClick={() => setSelectedPin(selectedPin === pin.id ? null : pin.id)}
+                        >
+                          <div
+                            className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border"
+                            style={{ backgroundColor: category?.color || "#3b82f6" }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                {pin.name}
+                              </h4>
+                              {pin.time && (
+                                <Badge variant="outline" className="text-xs">
+                                  {pin.time}
+                                </Badge>
+                              )}
+                            </div>
+                            {pin.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{pin.description}</p>
                             )}
                           </div>
-                          {pin.description && (
-                            <p className="text-[10px] text-white/50 line-clamp-2">{pin.description}</p>
-                          )}
                         </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </motion.div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             )
           })}
       </div>
 
-      {/* Add Pin Dialog */}
       <Dialog open={isAddPinDialogOpen} onOpenChange={setIsAddPinDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -664,7 +603,6 @@ export function InteractiveMapDemo() {
                 type="time"
                 value={newPinTime}
                 onChange={(e) => setNewPinTime(e.target.value)}
-                placeholder="HH:MM"
               />
             </div>
             {selectedLocation && (

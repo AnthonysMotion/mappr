@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chrome } from "lucide-react"
 import Link from "next/link"
 
@@ -73,73 +74,70 @@ export function LoginForm() {
       setError(error.message)
       setIsLoading(false)
     }
-    // Note: If successful, user will be redirected to Google, so we don't set loading to false here
   }
 
   return (
-    <div className="w-full max-w-md space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
+    <Card>
+      <CardHeader>
+        <CardTitle>
           {isSignUp ? "Create an account" : "Welcome back"}
-        </h1>
-        <p className="text-muted-foreground">
+        </CardTitle>
+        <CardDescription>
           {isSignUp
-            ? "Start planning your trips with Mappr"
-            : "Sign in to continue to Mappr"}
-        </p>
-      </div>
-
-      {/* Form */}
-      <div className="space-y-6">
+            ? "Please fill in your details below"
+            : "Please fill in your details below"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         {error && (
-          <div className="rounded-lg bg-destructive/15 border border-destructive/20 p-3 text-sm text-destructive">
+          <div className="rounded-lg bg-destructive/15 border border-destructive/20 p-3 text-sm text-destructive mb-4">
             {error}
           </div>
         )}
 
-        <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              className="h-10"
-            />
+        <form onSubmit={isSignUp ? handleSignUp : handleSignIn}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              minLength={6}
-              className="h-10"
-            />
-          </div>
-          <Button type="submit" className="w-full h-10" disabled={isLoading}>
-            {isLoading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
-          </Button>
         </form>
 
-        <div className="flex items-center gap-4">
-          <Separator className="flex-1" />
+        <div className="flex items-center gap-4 my-4">
+          <Separator />
           <span className="text-xs text-muted-foreground">OR</span>
-          <Separator className="flex-1" />
+          <Separator />
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="w-full h-10"
+          className="w-full"
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
@@ -147,14 +145,14 @@ export function LoginForm() {
           Continue with Google
         </Button>
 
-        <div className="text-center text-sm">
+        <div className="text-center text-sm mt-4">
           <button
             type="button"
             onClick={() => {
               setIsSignUp(!isSignUp)
               setError(null)
             }}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground"
           >
             {isSignUp ? (
               <>
@@ -169,21 +167,20 @@ export function LoginForm() {
             )}
           </button>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="text-center text-xs text-muted-foreground space-y-1">
-        <p>
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="hover:text-foreground transition-colors underline underline-offset-4">
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="hover:text-foreground transition-colors underline underline-offset-4">
-            Privacy Policy
-          </Link>
-        </p>
-      </div>
-    </div>
+        <div className="text-center text-xs text-muted-foreground mt-4 pt-4 border-t">
+          <p>
+            By continuing, you agree to our{" "}
+            <Link href="/terms" className="hover:text-foreground underline underline-offset-4">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="hover:text-foreground underline underline-offset-4">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

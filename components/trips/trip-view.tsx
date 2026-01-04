@@ -13,8 +13,7 @@ import { PinDialog } from "@/components/pins/pin-dialog"
 import { PinViewDialog } from "@/components/pins/pin-view-dialog"
 import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
-import { Calendar, Clock } from "lucide-react"
-import { motion } from "framer-motion"
+import { Calendar } from "lucide-react"
 
 interface Trip {
   id: string
@@ -158,9 +157,7 @@ export function TripView({
 
   const handleLocationSearch = (location: { name: string; lat: number; lng: number }) => {
     if (!canEdit) return
-    // Fly to the location on the map
     setFlyToLocation([location.lng, location.lat])
-    // Set the location and open the pin dialog with the location name pre-filled
     setMapClickLocation({ lat: location.lat, lng: location.lng })
     setPinDialogInitialName(location.name)
     setIsPinDialogOpen(true)
@@ -183,10 +180,8 @@ export function TripView({
       : [0, 0]
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col pt-4">
-      {/* Main Content */}
+    <div className="h-[calc(100vh-6rem)] flex flex-col">
       <div className="flex-1 flex overflow-hidden">
-        {/* Map */}
         <div className="flex-1 relative">
           <ClickableMap
             center={[mapCenter[0] || 0, mapCenter[1] || 0]}
@@ -210,8 +205,8 @@ export function TripView({
                 >
                   <MarkerContent>
                     <div
-                      className={`h-4 w-4 rounded-full border-2 border-white cursor-pointer transition-all ${
-                        isSelected ? "ring-2 ring-white scale-125" : ""
+                      className={`h-4 w-4 rounded-full border-2 border-background cursor-pointer transition-all ${
+                        isSelected ? "ring-2 ring-primary" : ""
                       }`}
                       style={{
                         backgroundColor: category?.color || "#3b82f6",
@@ -224,27 +219,27 @@ export function TripView({
                     />
                   </MarkerContent>
                   <MarkerPopup>
-                    <div className="space-y-2 min-w-[200px]">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{pin.name}</h3>
-                          {pin.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{pin.description}</p>
-                          )}
-                          {category && (
-                            <Badge
-                              className="mt-2"
-                              style={{
-                                backgroundColor: category.color,
-                                color: "white",
-                              }}
-                            >
-                              {category.name}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">{pin.name}</CardTitle>
+                        {pin.description && (
+                          <CardDescription className="line-clamp-2">
+                            {pin.description}
+                          </CardDescription>
+                        )}
+                        {category && (
+                          <Badge
+                            className="mt-2"
+                            style={{
+                              backgroundColor: category.color,
+                              color: "white",
+                            }}
+                          >
+                            {category.name}
+                          </Badge>
+                        )}
+                      </CardHeader>
+                    </Card>
                   </MarkerPopup>
                 </MapMarker>
               )
@@ -253,14 +248,14 @@ export function TripView({
           {canEdit && (
             <div className="absolute top-4 left-4 z-10 w-96 max-w-[calc(100%-2rem)]">
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm mb-3">Search for a location</CardTitle>
+                <CardHeader>
+                  <CardTitle className="text-sm">Search for a location</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <LocationSearch
                     onLocationSelect={handleLocationSearch}
                     disabled={!canEdit}
                   />
-                </CardHeader>
-                <CardContent className="pt-0">
                   <p className="text-xs text-muted-foreground">
                     Or click on the map to add a pin
                   </p>
@@ -270,8 +265,7 @@ export function TripView({
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="w-96 border-l bg-background overflow-y-auto">
+        <div className="w-96 border-l bg-[hsl(var(--card))] overflow-y-auto">
           <Tabs defaultValue="pins" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="pins" className="flex-1">
@@ -287,7 +281,7 @@ export function TripView({
                 </TabsTrigger>
               )}
             </TabsList>
-            <TabsContent value="pins" className="flex-1 overflow-y-auto p-4 space-y-2">
+            <TabsContent value="pins" className="flex-1 overflow-y-auto p-4 space-y-2 m-0">
               {pins.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
@@ -300,11 +294,11 @@ export function TripView({
                   return (
                     <Card
                       key={pin.id}
-                      className="cursor-pointer transition-all"
+                      className="cursor-pointer transition-colors hover:bg-accent/5"
                       onClick={() => setSelectedPin(pin)}
                     >
                       <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <CardTitle className="text-base">{pin.name}</CardTitle>
                           {category && (
                             <Badge
@@ -328,8 +322,7 @@ export function TripView({
                 })
               )}
             </TabsContent>
-            <TabsContent value="timeline" className="flex-1 overflow-y-auto p-4">
-              {/* Timeline View */}
+            <TabsContent value="timeline" className="flex-1 overflow-y-auto p-4 space-y-4 m-0">
               {pins.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
@@ -337,117 +330,108 @@ export function TripView({
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4">
-                  {/* Group pins by category for now (since we don't have day/time) */}
+                <>
                   {categories.length > 0 ? (
                     categories.map((category) => {
                       const categoryPins = pins.filter((pin) => pin.category_id === category.id)
                       if (categoryPins.length === 0) return null
 
                       return (
-                        <motion.div
-                          key={category.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="bg-card border rounded-lg p-4"
-                        >
-                          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                            <div
-                              className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            />
-                            {category.name} ({categoryPins.length})
-                          </h3>
-                          <div className="grid grid-cols-1 gap-2">
-                            {categoryPins.map((pin, index) => {
+                        <Card key={category.id}>
+                          <CardHeader>
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: category.color }}
+                              />
+                              {category.name} ({categoryPins.length})
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {categoryPins.map((pin) => {
                               const isSelected = selectedPin?.id === pin.id
                               return (
-                                <motion.div
+                                <Card
                                   key={pin.id}
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: index * 0.05 }}
-                                  className={`flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer ${
-                                    isSelected ? "ring-2 ring-primary bg-muted" : ""
+                                  className={`cursor-pointer transition-colors ${
+                                    isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
                                   }`}
                                   onClick={() => setSelectedPin(isSelected ? null : pin)}
                                 >
+                                  <CardContent className="p-3">
+                                    <div className="flex items-start gap-2">
+                                      <div
+                                        className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
+                                        style={{ backgroundColor: category.color }}
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                          {pin.name}
+                                        </h4>
+                                        {pin.description && (
+                                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                            {pin.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              )
+                            })}
+                          </CardContent>
+                        </Card>
+                      )
+                    })
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          All Pins ({pins.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {pins.map((pin) => {
+                          const category = pin.categories
+                          const isSelected = selectedPin?.id === pin.id
+                          return (
+                            <Card
+                              key={pin.id}
+                              className={`cursor-pointer transition-colors ${
+                                isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
+                              }`}
+                              onClick={() => setSelectedPin(isSelected ? null : pin)}
+                            >
+                              <CardContent className="p-3">
+                                <div className="flex items-start gap-2">
                                   <div
                                     className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                    style={{ backgroundColor: category.color }}
+                                    style={{ backgroundColor: category?.color || "#3b82f6" }}
                                   />
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2 mb-1">
-                                      <h4 className="font-medium text-sm leading-tight line-clamp-1">
-                                        {pin.name}
-                                      </h4>
-                                    </div>
+                                    <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                      {pin.name}
+                                    </h4>
                                     {pin.description && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                                         {pin.description}
                                       </p>
                                     )}
                                   </div>
-                                </motion.div>
-                              )
-                            })}
-                          </div>
-                        </motion.div>
-                      )
-                    })
-                  ) : (
-                    // If no categories, show all pins in one group
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="bg-card border rounded-lg p-4"
-                    >
-                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        All Pins ({pins.length})
-                      </h3>
-                      <div className="grid grid-cols-1 gap-2">
-                        {pins.map((pin, index) => {
-                          const category = pin.categories
-                          const isSelected = selectedPin?.id === pin.id
-                          return (
-                            <motion.div
-                              key={pin.id}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: index * 0.05 }}
-                              className={`flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer ${
-                                isSelected ? "ring-2 ring-primary bg-muted" : ""
-                              }`}
-                              onClick={() => setSelectedPin(isSelected ? null : pin)}
-                            >
-                              <div
-                                className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                style={{ backgroundColor: category?.color || "#3b82f6" }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <h4 className="font-medium text-sm leading-tight line-clamp-1">
-                                    {pin.name}
-                                  </h4>
                                 </div>
-                                {pin.description && (
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    {pin.description}
-                                  </p>
-                                )}
-                              </div>
-                            </motion.div>
+                              </CardContent>
+                            </Card>
                           )
                         })}
-                      </div>
-                    </motion.div>
+                      </CardContent>
+                    </Card>
                   )}
-                </div>
+                </>
               )}
             </TabsContent>
             {canEdit && (
-              <TabsContent value="categories" className="flex-1 overflow-y-auto p-4">
+              <TabsContent value="categories" className="flex-1 overflow-y-auto p-4 m-0">
                 <CategoryManager
                   tripId={trip.id}
                   categories={categories}
@@ -459,7 +443,6 @@ export function TripView({
         </div>
       </div>
 
-      {/* Dialogs */}
       <PinDialog
         open={isPinDialogOpen}
         onOpenChange={(open) => {

@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/footer"
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-black">
+    <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1 flex items-center justify-center p-4 py-20">
         <LoginForm />
