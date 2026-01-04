@@ -309,7 +309,7 @@ export function InteractiveMapDemo() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="relative w-full h-[600px] rounded-lg overflow-hidden border">
+      <div className="relative w-full h-[600px] rounded-none overflow-hidden border">
         <Map center={mapCenter} zoom={11}>
           <MapControls showZoom />
 
@@ -380,17 +380,17 @@ export function InteractiveMapDemo() {
           })}
         </Map>
 
-        <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center gap-2">
-          <Card>
-            <CardContent className="p-3">
+        <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center gap-3">
+          <Card className="rounded-none">
+            <CardContent className="p-2.5">
               <LocationSearch
                 onLocationSelect={handleLocationSelect}
               />
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-2 flex flex-wrap items-center gap-2">
+          <Card className="rounded-none">
+            <CardContent className="p-2.5 flex flex-wrap items-center gap-2">
               <Button
                 onClick={() => {
                   setShowRoutes(!showRoutes)
@@ -398,8 +398,9 @@ export function InteractiveMapDemo() {
                 }}
                 variant={showRoutes ? "default" : "outline"}
                 size="sm"
+                className="h-7 px-2.5 text-xs"
               >
-                <Route className="h-3 w-3 mr-1.5" />
+                <Route className="h-3.5 w-3.5 mr-1.5" />
                 {showRoutes ? "Hide Routes" : "Routes"}
               </Button>
 
@@ -415,6 +416,7 @@ export function InteractiveMapDemo() {
                       onClick={() => setSelectedRoute(null)}
                       variant={selectedRoute === null ? "default" : "outline"}
                       size="sm"
+                      className="h-7 px-2.5 text-xs"
                     >
                       All
                     </Button>
@@ -424,7 +426,7 @@ export function InteractiveMapDemo() {
                         onClick={() => setSelectedRoute(route.id)}
                         variant={selectedRoute === route.id ? "default" : "outline"}
                         size="sm"
-                        className="flex items-center gap-1.5"
+                        className="h-7 px-2.5 text-xs flex items-center gap-1.5"
                       >
                         <div
                           className="h-2 w-2 rounded-full"
@@ -439,13 +441,14 @@ export function InteractiveMapDemo() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Filter:</span>
+          <Card className="rounded-none">
+            <CardContent className="p-2.5 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Filter:</span>
               <Button
                 onClick={() => setSelectedCategory(null)}
                 variant={selectedCategory === null ? "default" : "outline"}
                 size="sm"
+                className="h-7 px-2.5 text-xs"
               >
                 All
               </Button>
@@ -455,7 +458,7 @@ export function InteractiveMapDemo() {
                   onClick={() => setSelectedCategory(category.id)}
                   variant={selectedCategory === category.id ? "default" : "outline"}
                   size="sm"
-                  className="flex items-center gap-1.5"
+                  className="h-7 px-2.5 text-xs flex items-center gap-1.5"
                 >
                   <div
                     className="h-2 w-2 rounded-full"
@@ -494,7 +497,7 @@ export function InteractiveMapDemo() {
                       return (
                         <div
                           key={pin.id}
-                          className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                          className={`flex items-start gap-2 p-2.5 rounded-none border cursor-pointer transition-colors ${
                             selectedPin === pin.id ? "ring-2 ring-primary" : ""
                           }`}
                           onClick={() => setSelectedPin(selectedPin === pin.id ? null : pin.id)}

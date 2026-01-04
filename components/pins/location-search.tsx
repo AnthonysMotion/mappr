@@ -155,7 +155,7 @@ export function LocationSearch({ onLocationSelect, disabled, className }: Locati
 
       {/* Dropdown results */}
       {isOpen && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none max-h-60 overflow-auto">
           {results.map((result, index) => (
             <button
               key={result.place_id}
@@ -180,7 +180,7 @@ export function LocationSearch({ onLocationSelect, disabled, className }: Locati
 
       {/* No results message */}
       {isOpen && !isLoading && query.trim() && results.length === 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md p-4 text-sm text-muted-foreground text-center">
+        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none p-4 text-sm text-muted-foreground text-center">
           No locations found
         </div>
       )}
