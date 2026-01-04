@@ -5,15 +5,16 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Chrome } from "lucide-react"
+import Link from "next/link"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSignUp, setIsSignUp] = useState(false)
   const supabase = createClient()
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -76,18 +77,28 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Welcome to Trip Planner</CardTitle>
-        <CardDescription>Sign in to your account or create a new one</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSignIn}>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+    <div className="w-full max-w-md space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">
+          {isSignUp ? "Create an account" : "Welcome back"}
+        </h1>
+        <p className="text-muted-foreground">
+          {isSignUp
+            ? "Start planning your trips with Mappr"
+            : "Sign in to continue to Mappr"}
+        </p>
+      </div>
+
+      {/* Form */}
+      <div className="space-y-6">
+        {error && (
+          <div className="rounded-lg bg-destructive/15 border border-destructive/20 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -98,6 +109,7 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              className="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -110,41 +122,68 @@ export function LoginForm() {
               required
               disabled={isLoading}
               minLength={6}
+              className="h-10"
             />
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Loading..." : "Sign In"}
+          <Button type="submit" className="w-full h-10" disabled={isLoading}>
+            {isLoading ? "Loading..." : isSignUp ? "Create account" : "Sign in"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleSignUp}
-            disabled={isLoading}
-          >
-            Sign Up
-          </Button>
-          
-          <div className="flex items-center gap-4 w-full">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">OR</span>
-            <Separator className="flex-1" />
-          </div>
+        </form>
 
-          <Button
+        <div className="flex items-center gap-4">
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">OR</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-10"
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+        >
+          <Chrome className="mr-2 h-4 w-4" />
+          Continue with Google
+        </Button>
+
+        <div className="text-center text-sm">
+          <button
             type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setError(null)
+            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Chrome className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+            {isSignUp ? (
+              <>
+                Already have an account?{" "}
+                <span className="font-medium text-foreground">Sign in</span>
+              </>
+            ) : (
+              <>
+                Don't have an account?{" "}
+                <span className="font-medium text-foreground">Sign up</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center text-xs text-muted-foreground space-y-1">
+        <p>
+          By continuing, you agree to our{" "}
+          <Link href="/terms" className="hover:text-foreground transition-colors underline underline-offset-4">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="hover:text-foreground transition-colors underline underline-offset-4">
+            Privacy Policy
+          </Link>
+        </p>
+      </div>
+    </div>
   )
 }

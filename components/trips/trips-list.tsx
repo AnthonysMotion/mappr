@@ -35,7 +35,7 @@ export function TripsList({ trips }: TripsListProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {trips.map((trip) => (
         <Link key={trip.id} href={`/trips/${trip.id}`}>
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+          <Card className="hover:bg-accent/5 transition-colors cursor-pointer h-full">
             <CardHeader>
               <CardTitle>{trip.name}</CardTitle>
               {trip.description && (

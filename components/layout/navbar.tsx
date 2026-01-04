@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Plane, Menu, X } from "lucide-react"
+import { Plane, Menu, X, ArrowLeft, Share2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
@@ -15,12 +15,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ShareTripDialog } from "@/components/trips/share-trip-dialog"
 
-export function Navbar() {
+interface NavbarProps {
+  trip?: {
+    id: string
+    name: string
+    description?: string | null
+  }
+  userRole?: "owner" | "editor" | "viewer"
+  onShareClick?: () => void
+}
+
+export function Navbar({ trip, userRole, onShareClick }: NavbarProps) {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const supabase = createClient()
+  
+  const isTripDetailPage = pathname?.startsWith("/trips/") && pathname !== "/trips" && pathname !== "/trips/new"
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -43,31 +57,53 @@ export function Navbar() {
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path)
 
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-8">
-      {/* Brand Name */}
-      <Link href="/" className="text-xl font-light tracking-[0.2em] text-white uppercase hover:opacity-80 transition-opacity">
-        MAPPR
-      </Link>
+  const handleShareClick = () => {
+    if (onShareClick) {
+      onShareClick()
+    } else if (trip) {
+      setIsShareDialogOpen(true)
+    }
+  }
 
-      {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center space-x-10">
-        <Link 
-          href="/#features" 
-          className={`text-sm font-light transition-colors ${
-            pathname === "/" ? "text-white" : "text-white/70 hover:text-white"
-          }`}
-        >
-          Features
-        </Link>
-        <Link 
-          href="/#how-it-works" 
-          className={`text-sm font-light transition-colors ${
-            pathname === "/" ? "text-white/70 hover:text-white" : "text-white/70 hover:text-white"
-          }`}
-        >
-          How It Works
-        </Link>
+  return (
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-8">
+        {/* Left Side - Brand or Trip Info */}
+        <div className="flex items-center gap-4">
+          {isTripDetailPage && trip ? (
+            <>
+              <Link href="/trips">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-xl font-semibold text-white">{trip.name}</h1>
+                {trip.description && (
+                  <p className="text-xs text-white/60 line-clamp-1">{trip.description}</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <Link href="/" className="text-xl text-white hover:opacity-80 transition-opacity">
+              Mappr
+            </Link>
+          )}
+        </div>
+
+        {/* Right Side - Navigation */}
+        <div className="hidden md:flex items-center space-x-4">
+          {isTripDetailPage && trip && (
+            <Button 
+              variant="outline" 
+              onClick={handleShareClick}
+              className="bg-white/5 backdrop-blur-md border-white/10 hover:bg-white/10 text-white"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          )}
+          <div className="flex items-center space-x-10">
         {user ? (
           <>
             <Link 
@@ -116,25 +152,51 @@ export function Navbar() {
             </Button>
           </Link>
         )}
-      </div>
+          </div>
+        </div>
 
-      {/* Mobile Menu Button */}
-      <button
-        className="md:hidden text-white"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-black/95 backdrop-blur-md border-b border-white/10 p-6 space-y-4 md:hidden">
-          <Link href="/#features" className="block text-white/70 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
-            Features
-          </Link>
-          <Link href="/#how-it-works" className="block text-white/70 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
-            How It Works
-          </Link>
+          {isTripDetailPage && trip && (
+            <>
+              <div className="pb-4 border-b border-white/10">
+                <h2 className="text-lg font-semibold text-white mb-1">{trip.name}</h2>
+                {trip.description && (
+                  <p className="text-sm text-white/60 line-clamp-2">{trip.description}</p>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    handleShareClick()
+                    setMobileMenuOpen(false)
+                  }}
+                  className="mt-3 w-full bg-white/5 border-white/10 text-white"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </>
+          )}
+          {!isTripDetailPage && (
+            <>
+              <Link href="/#features" className="block text-white/70 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
+                Features
+              </Link>
+              <Link href="/#how-it-works" className="block text-white/70 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
+                How It Works
+              </Link>
+            </>
+          )}
           {user ? (
             <>
               <Link href="/trips" className="block text-white/70 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
@@ -167,6 +229,17 @@ export function Navbar() {
           )}
         </div>
       )}
-    </nav>
+      </nav>
+      
+      {/* Share Dialog */}
+      {trip && userRole && (
+        <ShareTripDialog
+          open={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+          tripId={trip.id}
+          userRole={userRole}
+        />
+      )}
+    </>
   )
 }

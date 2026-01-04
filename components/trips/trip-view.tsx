@@ -10,12 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PinDialog } from "@/components/pins/pin-dialog"
+import { PinViewDialog } from "@/components/pins/pin-view-dialog"
 import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
-import { TripLists } from "@/components/lists/trip-lists"
-import { ShareTripDialog } from "@/components/trips/share-trip-dialog"
-import { ArrowLeft, Share2, Settings } from "lucide-react"
-import Link from "next/link"
+import { Calendar, Clock } from "lucide-react"
+import { motion } from "framer-motion"
 
 interface Trip {
   id: string
@@ -42,21 +41,10 @@ interface Pin {
   categories: Category | null
 }
 
-interface ListItem {
-  id: string
-  list_type: "stores" | "things_to_do" | "things_to_see"
-  name: string
-  description: string | null
-  pin_id: string | null
-  completed: boolean
-  pins: { id: string; name: string } | null
-}
-
 interface TripViewProps {
   trip: Trip
   pins: Pin[]
   categories: Category[]
-  listItems: ListItem[]
   userRole: "owner" | "editor" | "viewer"
   currentUserId: string
 }
@@ -65,19 +53,18 @@ export function TripView({
   trip,
   pins: initialPins,
   categories: initialCategories,
-  listItems: initialListItems,
   userRole,
   currentUserId,
 }: TripViewProps) {
   const [pins, setPins] = useState<Pin[]>(initialPins)
   const [categories, setCategories] = useState<Category[]>(initialCategories)
-  const [listItems, setListItems] = useState<ListItem[]>(initialListItems)
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null)
   const [isPinDialogOpen, setIsPinDialogOpen] = useState(false)
+  const [isPinViewDialogOpen, setIsPinViewDialogOpen] = useState(false)
+  const [viewingPin, setViewingPin] = useState<Pin | null>(null)
   const [mapClickLocation, setMapClickLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [pinDialogInitialName, setPinDialogInitialName] = useState<string | undefined>(undefined)
   const [flyToLocation, setFlyToLocation] = useState<[number, number] | null>(null)
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const supabase = createClient()
 
   const canEdit = userRole === "owner" || userRole === "editor"
@@ -121,26 +108,6 @@ export function TripView({
             .eq("trip_id", trip.id)
             .order("created_at", { ascending: true })
           if (data) setCategories(data as Category[])
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "list_items",
-          filter: `trip_id=eq.${trip.id}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from("list_items")
-            .select(`
-              *,
-              pins(id, name)
-            `)
-            .eq("trip_id", trip.id)
-            .order("created_at", { ascending: false })
-          if (data) setListItems(data as ListItem[])
         }
       )
       .subscribe()
@@ -216,32 +183,7 @@ export function TripView({
       : [0, 0]
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/trips">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">{trip.name}</h1>
-              {trip.description && (
-                <p className="text-sm text-muted-foreground">{trip.description}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsShareDialogOpen(true)}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <div className="h-[calc(100vh-6rem)] flex flex-col pt-4">
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Map */}
@@ -259,6 +201,7 @@ export function TripView({
             <MapControls showZoom showLocate />
             {pins.map((pin) => {
               const category = pin.categories
+              const isSelected = selectedPin?.id === pin.id
               return (
                 <MapMarker
                   key={pin.id}
@@ -267,9 +210,16 @@ export function TripView({
                 >
                   <MarkerContent>
                     <div
-                      className="h-4 w-4 rounded-full border-2 border-white shadow-lg cursor-pointer"
+                      className={`h-4 w-4 rounded-full border-2 border-white cursor-pointer transition-all ${
+                        isSelected ? "ring-2 ring-white scale-125" : ""
+                      }`}
                       style={{
                         backgroundColor: category?.color || "#3b82f6",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setViewingPin(pin)
+                        setIsPinViewDialogOpen(true)
                       }}
                     />
                   </MarkerContent>
@@ -293,16 +243,6 @@ export function TripView({
                             </Badge>
                           )}
                         </div>
-                        {canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handlePinDelete(pin.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            Delete
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </MarkerPopup>
@@ -312,7 +252,7 @@ export function TripView({
           </ClickableMap>
           {canEdit && (
             <div className="absolute top-4 left-4 z-10 w-96 max-w-[calc(100%-2rem)]">
-              <Card className="shadow-lg">
+              <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm mb-3">Search for a location</CardTitle>
                   <LocationSearch
@@ -337,8 +277,9 @@ export function TripView({
               <TabsTrigger value="pins" className="flex-1">
                 Pins ({pins.length})
               </TabsTrigger>
-              <TabsTrigger value="lists" className="flex-1">
-                Lists
+              <TabsTrigger value="timeline" className="flex-1">
+                <Calendar className="h-4 w-4 mr-1.5" />
+                Timeline
               </TabsTrigger>
               {canEdit && (
                 <TabsTrigger value="categories" className="flex-1">
@@ -359,7 +300,7 @@ export function TripView({
                   return (
                     <Card
                       key={pin.id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      className="cursor-pointer transition-all"
                       onClick={() => setSelectedPin(pin)}
                     >
                       <CardHeader className="pb-2">
@@ -387,14 +328,123 @@ export function TripView({
                 })
               )}
             </TabsContent>
-            <TabsContent value="lists" className="flex-1 overflow-y-auto p-4">
-              <TripLists
-                tripId={trip.id}
-                listItems={listItems}
-                pins={pins}
-                canEdit={canEdit}
-                currentUserId={currentUserId}
-              />
+            <TabsContent value="timeline" className="flex-1 overflow-y-auto p-4">
+              {/* Timeline View */}
+              {pins.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No pins yet. {canEdit && "Click on the map to add one!"}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {/* Group pins by category for now (since we don't have day/time) */}
+                  {categories.length > 0 ? (
+                    categories.map((category) => {
+                      const categoryPins = pins.filter((pin) => pin.category_id === category.id)
+                      if (categoryPins.length === 0) return null
+
+                      return (
+                        <motion.div
+                          key={category.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="bg-card border rounded-lg p-4"
+                        >
+                          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name} ({categoryPins.length})
+                          </h3>
+                          <div className="grid grid-cols-1 gap-2">
+                            {categoryPins.map((pin, index) => {
+                              const isSelected = selectedPin?.id === pin.id
+                              return (
+                                <motion.div
+                                  key={pin.id}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className={`flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer ${
+                                    isSelected ? "ring-2 ring-primary bg-muted" : ""
+                                  }`}
+                                  onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                >
+                                  <div
+                                    className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
+                                    style={{ backgroundColor: category.color }}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                      <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                        {pin.name}
+                                      </h4>
+                                    </div>
+                                    {pin.description && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {pin.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )
+                            })}
+                          </div>
+                        </motion.div>
+                      )
+                    })
+                  ) : (
+                    // If no categories, show all pins in one group
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="bg-card border rounded-lg p-4"
+                    >
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        All Pins ({pins.length})
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {pins.map((pin, index) => {
+                          const category = pin.categories
+                          const isSelected = selectedPin?.id === pin.id
+                          return (
+                            <motion.div
+                              key={pin.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: index * 0.05 }}
+                              className={`flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer ${
+                                isSelected ? "ring-2 ring-primary bg-muted" : ""
+                              }`}
+                              onClick={() => setSelectedPin(isSelected ? null : pin)}
+                            >
+                              <div
+                                className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
+                                style={{ backgroundColor: category?.color || "#3b82f6" }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                    {pin.name}
+                                  </h4>
+                                </div>
+                                {pin.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {pin.description}
+                                  </p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </TabsContent>
             {canEdit && (
               <TabsContent value="categories" className="flex-1 overflow-y-auto p-4">
@@ -424,11 +474,12 @@ export function TripView({
         initialLocation={mapClickLocation}
         initialName={pinDialogInitialName}
       />
-      <ShareTripDialog
-        open={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
-        tripId={trip.id}
-        userRole={userRole}
+      <PinViewDialog
+        open={isPinViewDialogOpen}
+        onOpenChange={setIsPinViewDialogOpen}
+        pin={viewingPin}
+        onDelete={handlePinDelete}
+        canEdit={canEdit}
       />
     </div>
   )

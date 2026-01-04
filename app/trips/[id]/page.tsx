@@ -60,25 +60,14 @@ export default async function TripDetailPage({
     .eq("trip_id", id)
     .order("created_at", { ascending: true })
 
-  // Fetch list items
-  const { data: listItems } = await supabase
-    .from("list_items")
-    .select(`
-      *,
-      pins(id, name)
-    `)
-    .eq("trip_id", id)
-    .order("created_at", { ascending: false })
-
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+      <Navbar trip={trip} userRole={role} />
       <main className="flex-1 pt-24">
         <TripView
           trip={trip}
           pins={pins || []}
           categories={categories || []}
-          listItems={listItems || []}
           userRole={role}
           currentUserId={user.id}
         />
