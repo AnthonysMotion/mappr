@@ -216,7 +216,7 @@ export function TripView({
       : [0, 0]
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-[calc(100vh-6rem)] flex flex-col">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

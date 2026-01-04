@@ -267,12 +267,12 @@ export function TripLists({
                 {pins.length > 0 && (
                   <div className="space-y-2">
                     <Label htmlFor="pin-link">Link to Pin (Optional)</Label>
-                    <Select value={pinId} onValueChange={setPinId}>
+                    <Select value={pinId || undefined} onValueChange={(value) => setPinId(value === "none" ? "" : value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a pin" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {pins.map((pin) => (
                           <SelectItem key={pin.id} value={pin.id}>
                             {pin.name}

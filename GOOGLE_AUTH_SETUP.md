@@ -117,3 +117,4 @@ When deploying to production:
 - [Supabase OAuth Documentation](https://supabase.com/docs/guides/auth/social-login/auth-google)
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
 
+

@@ -1,74 +1,30 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Map, Users, List } from "lucide-react"
+"use client"
 
 export function Hero() {
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-background" />
+    <section className="relative flex flex-col items-center justify-center text-white overflow-visible pb-32">
+      {/* Background with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-black/95" />
       
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      {/* Animated grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      
+      <div className="container mx-auto px-4 relative z-10 pt-32">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-              Plan Your Perfect Trip
-              <span className="block text-primary">Together</span>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
+              Plan trips together.
+              <br />
+              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                Effortlessly.
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Collaborate with friends and family to create unforgettable travel experiences. Pin locations, share ideas, and organize everything in one place.
+            <p className="text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
+              The collaborative workspace for travel planning. Pin locations, build timelines, and organize every detail with your travel companions in real-time.
             </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/auth/login">
-              <Button size="lg" className="text-lg px-8">
-                Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/#how-it-works">
-              <Button size="lg" variant="outline" className="text-lg px-8">
-                Learn More
-              </Button>
-            </Link>
-          </div>
-
-          {/* Feature highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
-            <div className="flex flex-col items-center gap-3 p-6 rounded-lg border bg-card">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Map className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold">Interactive Maps</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Pin locations and explore your trip visually
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-3 p-6 rounded-lg border bg-card">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold">Real-time Collaboration</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Share trips and plan together in real-time
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-3 p-6 rounded-lg border bg-card">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <List className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold">Organized Lists</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Create lists for activities, stores, and things to see
-              </p>
-            </div>
           </div>
         </div>
       </div>
     </section>
   )
 }
-

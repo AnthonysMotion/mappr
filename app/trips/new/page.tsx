@@ -18,7 +18,7 @@ export default async function NewTripPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 pt-24">
         <div className="container mx-auto py-8 px-4 max-w-2xl">
           <h1 className="text-3xl font-bold mb-8">Create New Trip</h1>
           <NewTripForm />

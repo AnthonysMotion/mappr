@@ -27,13 +27,13 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-20 md:py-32 bg-muted/30">
+    <section id="how-it-works" className="py-20 md:py-32 bg-black text-white border-t border-white/10">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             How It Works
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-white/60">
             Get started in minutes. Planning your perfect trip has never been easier.
           </p>
         </div>
@@ -46,20 +46,20 @@ export function HowItWorks() {
                 <div key={index} className="relative">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <div className="relative">
-                      <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center">
-                        <Icon className="h-8 w-8 text-primary-foreground" />
+                      <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                        <Icon className="h-8 w-8 text-white" />
                       </div>
-                      <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-background border-2 border-primary flex items-center justify-center text-sm font-bold">
+                      <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-black border-2 border-white/20 flex items-center justify-center text-sm font-bold text-white">
                         {index + 1}
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                      <p className="text-sm text-muted-foreground">{step.description}</p>
+                      <h3 className="text-lg font-semibold mb-2 text-white">{step.title}</h3>
+                      <p className="text-sm text-white/70">{step.description}</p>
                     </div>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-0.5 bg-border" />
+                    <div className="hidden lg:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-0.5 bg-white/10" />
                   )}
                 </div>
               )
@@ -68,7 +68,7 @@ export function HowItWorks() {
 
           <div className="text-center">
             <Link href="/auth/login">
-              <Button size="lg" className="text-lg px-8">
+              <Button size="lg" className="bg-white text-black hover:bg-white/90 rounded-full text-lg px-8">
                 Start Planning Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -79,4 +79,3 @@ export function HowItWorks() {
     </section>
   )
 }
-

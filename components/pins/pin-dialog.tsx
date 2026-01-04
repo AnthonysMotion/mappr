@@ -84,7 +84,7 @@ export function PinDialog({
     onSave({
       name,
       description: description || undefined,
-      categoryId: categoryId || undefined,
+      categoryId: categoryId && categoryId !== "none" ? categoryId : undefined,
       latitude: location.lat,
       longitude: location.lng,
     })
@@ -124,12 +124,12 @@ export function PinDialog({
             {categories.length > 0 && (
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select value={categoryId} onValueChange={setCategoryId}>
+                <Select value={categoryId || undefined} onValueChange={(value) => setCategoryId(value === "none" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">

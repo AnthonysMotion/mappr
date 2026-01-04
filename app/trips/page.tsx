@@ -30,7 +30,7 @@ export default async function TripsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 pt-24">
         <div className="container mx-auto py-8 px-4">
           <div className="flex items-center justify-between mb-8">
             <div>
