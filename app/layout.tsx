@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Planner - Collaborative Travel Planning",
-  description: "Plan your trips collaboratively with friends and family",
+  title: "Mappr - Collaborative Travel Planning",
+  description: "Plan your trips collaboratively with friends and family. Pin locations, create lists, and share your adventures.",
 };
 
 export default function RootLayout({
