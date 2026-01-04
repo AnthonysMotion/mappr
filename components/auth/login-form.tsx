@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chrome } from "lucide-react"
 import Link from "next/link"
+import { getCallbackUrl } from "@/lib/utils/auth"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -46,7 +47,7 @@ export function LoginForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: getCallbackUrl(),
       },
     })
 
@@ -66,7 +67,7 @@ export function LoginForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: getCallbackUrl(),
       },
     })
 
