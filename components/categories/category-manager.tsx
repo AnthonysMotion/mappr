@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,7 @@ interface CategoryManagerProps {
   tripId: string
   categories: Category[]
   currentUserId: string
+  onCategoryCreated?: (category: Category) => void
 }
 
 const DEFAULT_COLORS = [
@@ -45,12 +46,18 @@ export function CategoryManager({
   tripId,
   categories: initialCategories,
   currentUserId,
+  onCategoryCreated,
 }: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [name, setName] = useState("")
   const [color, setColor] = useState(DEFAULT_COLORS[0])
   const supabase = createClient()
+
+  // Update local state when initialCategories changes
+  useEffect(() => {
+    setCategories(initialCategories)
+  }, [initialCategories])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,7 +73,12 @@ export function CategoryManager({
       .single()) as any
 
     if (!error && data) {
-      setCategories([...categories, data as Category])
+      const newCategory = data as Category
+      setCategories([...categories, newCategory])
+      // Notify parent component
+      if (onCategoryCreated) {
+        onCategoryCreated(newCategory)
+      }
       setName("")
       setColor(DEFAULT_COLORS[0])
       setIsDialogOpen(false)

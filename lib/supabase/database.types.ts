@@ -14,6 +14,9 @@ export interface Database {
           id: string
           name: string
           description: string | null
+          start_date: string | null
+          end_date: string | null
+          label: string | null
           created_by: string
           created_at: string
           updated_at: string
@@ -22,6 +25,9 @@ export interface Database {
           id?: string
           name: string
           description?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          label?: string | null
           created_by: string
           created_at?: string
           updated_at?: string
@@ -30,6 +36,9 @@ export interface Database {
           id?: string
           name?: string
           description?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          label?: string | null
           created_by?: string
           created_at?: string
           updated_at?: string
@@ -67,6 +76,8 @@ export interface Database {
           latitude: number
           longitude: number
           category_id: string | null
+          day: number | null
+          time: string | null
           created_by: string
           created_at: string
           updated_at: string
@@ -79,6 +90,8 @@ export interface Database {
           latitude: number
           longitude: number
           category_id?: string | null
+          day?: number | null
+          time?: string | null
           created_by: string
           created_at?: string
           updated_at?: string
@@ -91,6 +104,8 @@ export interface Database {
           latitude?: number
           longitude?: number
           category_id?: string | null
+          day?: number | null
+          time?: string | null
           created_by?: string
           created_at?: string
           updated_at?: string

@@ -11,14 +11,25 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PinDialog } from "@/components/pins/pin-dialog"
 import { PinViewDialog } from "@/components/pins/pin-view-dialog"
+import { PinEditDialog } from "@/components/pins/pin-edit-dialog"
 import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
-import { Calendar } from "lucide-react"
+import { Calendar, MoreVertical, Edit, Tag, Trash2, Clock } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Trip {
   id: string
   name: string
   description: string | null
+  start_date: string | null
+  end_date: string | null
+  label: string | null
   created_at: string
 }
 
@@ -36,6 +47,8 @@ interface Pin {
   latitude: number
   longitude: number
   category_id: string | null
+  day: number | null
+  time: string | null
   created_by: string
   categories: Category | null
 }
@@ -60,6 +73,8 @@ export function TripView({
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null)
   const [isPinDialogOpen, setIsPinDialogOpen] = useState(false)
   const [isPinViewDialogOpen, setIsPinViewDialogOpen] = useState(false)
+  const [isPinEditDialogOpen, setIsPinEditDialogOpen] = useState(false)
+  const [editingPin, setEditingPin] = useState<Pin | null>(null)
   const [viewingPin, setViewingPin] = useState<Pin | null>(null)
   const [mapClickLocation, setMapClickLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [pinDialogInitialName, setPinDialogInitialName] = useState<string | undefined>(undefined)
@@ -129,6 +144,8 @@ export function TripView({
     categoryId?: string
     latitude: number
     longitude: number
+    day?: number
+    time?: string
   }) => {
     const { data, error } = (await supabase
       .from("pins")
@@ -139,6 +156,8 @@ export function TripView({
         latitude: pinData.latitude,
         longitude: pinData.longitude,
         category_id: pinData.categoryId || null,
+        day: pinData.day || null,
+        time: pinData.time || null,
         created_by: currentUserId,
       } as any)
       .select(`
@@ -169,6 +188,115 @@ export function TripView({
       setPins(pins.filter((p) => p.id !== pinId))
     }
   }
+
+  const handlePinUpdate = async (pinData: {
+    id: string
+    name: string
+    description?: string
+    categoryId?: string
+    latitude: number
+    longitude: number
+    day?: number
+    time?: string
+  }) => {
+    const { data, error } = (await supabase
+      .from("pins")
+      .update({
+        name: pinData.name,
+        description: pinData.description || null,
+        category_id: pinData.categoryId || null,
+        latitude: pinData.latitude,
+        longitude: pinData.longitude,
+        day: pinData.day || null,
+        time: pinData.time || null,
+      } as any)
+      .eq("id", pinData.id)
+      .select(`
+        *,
+        categories(*)
+      `)
+      .single()) as any
+
+    if (!error && data) {
+      setPins(pins.map((p) => (p.id === pinData.id ? (data as Pin) : p)))
+      setIsPinEditDialogOpen(false)
+      setEditingPin(null)
+      // Fly to updated location
+      setFlyToLocation([pinData.longitude, pinData.latitude])
+    }
+  }
+
+  const handleEditPin = (pin: Pin) => {
+    setEditingPin(pin)
+    setIsPinEditDialogOpen(true)
+  }
+
+  const handleChangeCategory = async (pin: Pin, categoryId: string | null) => {
+    const { data, error } = (await supabase
+      .from("pins")
+      .update({
+        category_id: categoryId,
+      } as any)
+      .eq("id", pin.id)
+      .select(`
+        *,
+        categories(*)
+      `)
+      .single()) as any
+
+    if (!error && data) {
+      setPins(pins.map((p) => (p.id === pin.id ? (data as Pin) : p)))
+    }
+  }
+
+
+  // Calculate trip days
+  const tripDays = (() => {
+    if (!trip.start_date || !trip.end_date) return []
+    const start = new Date(trip.start_date)
+    const end = new Date(trip.end_date)
+    const days: { day: number; date: Date; label: string }[] = []
+    let currentDate = new Date(start)
+    let dayNum = 1
+    
+    while (currentDate <= end) {
+      const dateStr = currentDate.toLocaleDateString('en-US', { 
+        day: 'numeric', 
+        month: 'short' 
+      })
+      days.push({ 
+        day: dayNum, 
+        date: new Date(currentDate), 
+        label: `Day ${dayNum} - ${dateStr}` 
+      })
+      currentDate.setDate(currentDate.getDate() + 1)
+      dayNum++
+    }
+    return days
+  })()
+
+  // Group pins by day and sort by time
+  const pinsByDay = (() => {
+    const grouped: Record<number, Pin[]> = {}
+    pins.forEach((pin) => {
+      if (pin.day) {
+        if (!grouped[pin.day]) {
+          grouped[pin.day] = []
+        }
+        grouped[pin.day].push(pin)
+      }
+    })
+    // Sort each day's pins by time
+    Object.keys(grouped).forEach((day) => {
+      grouped[parseInt(day)].sort((a, b) => {
+        if (!a.time && !b.time) return 0
+        if (!a.time) return 1
+        if (!b.time) return -1
+        return a.time.localeCompare(b.time)
+      })
+    })
+    return grouped
+  })()
 
   // Calculate map center from pins
   const mapCenter: [number, number] =
@@ -294,28 +422,97 @@ export function TripView({
                   return (
                     <Card
                       key={pin.id}
-                      className="cursor-pointer transition-colors hover:bg-accent/5"
-                      onClick={() => setSelectedPin(pin)}
+                      className="transition-colors hover:bg-accent/5"
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
-                          <CardTitle className="text-base">{pin.name}</CardTitle>
-                          {category && (
-                            <Badge
-                              style={{
-                                backgroundColor: category.color,
-                                color: "white",
-                              }}
-                            >
-                              {category.name}
-                            </Badge>
-                          )}
+                          <div 
+                            className="flex-1 cursor-pointer"
+                            onClick={() => setSelectedPin(pin)}
+                          >
+                            <CardTitle className="text-base">{pin.name}</CardTitle>
+                            {pin.description && (
+                              <CardDescription className="line-clamp-2 mt-1">
+                                {pin.description}
+                              </CardDescription>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {category && (
+                              <Badge
+                                style={{
+                                  backgroundColor: category.color,
+                                  color: "white",
+                                }}
+                              >
+                                {category.name}
+                              </Badge>
+                            )}
+                            {canEdit && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleEditPin(pin)
+                                  }}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Pin
+                                  </DropdownMenuItem>
+                                            {categories.length > 0 && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleChangeCategory(pin, null)
+                                      }}>
+                                        <Tag className="h-4 w-4 mr-2" />
+                                        Remove Category
+                                      </DropdownMenuItem>
+                                      {categories.map((cat) => (
+                                        <DropdownMenuItem
+                                          key={cat.id}
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleChangeCategory(pin, cat.id)
+                                          }}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <div
+                                              className="h-2 w-2 rounded-full"
+                                              style={{ backgroundColor: cat.color }}
+                                            />
+                                            {cat.name}
+                                          </div>
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handlePinDelete(pin.id)
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Pin
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         </div>
-                        {pin.description && (
-                          <CardDescription className="line-clamp-2">
-                            {pin.description}
-                          </CardDescription>
-                        )}
                       </CardHeader>
                     </Card>
                   )
@@ -323,48 +520,82 @@ export function TripView({
               )}
             </TabsContent>
             <TabsContent value="timeline" className="flex-1 overflow-y-auto p-4 space-y-4 m-0">
-              {pins.length === 0 ? (
+              {!trip.start_date || !trip.end_date ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    No pins yet. {canEdit && "Click on the map to add one!"}
+                    <p className="mb-2">No trip dates set.</p>
+                    <p className="text-xs">Set start and end dates for your trip to see the timeline.</p>
+                  </CardContent>
+                </Card>
+              ) : tripDays.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    Invalid trip dates. Please check your trip settings.
                   </CardContent>
                 </Card>
               ) : (
                 <>
-                  {categories.length > 0 ? (
-                    categories.map((category) => {
-                      const categoryPins = pins.filter((pin) => pin.category_id === category.id)
-                      if (categoryPins.length === 0) return null
-
-                      return (
-                        <Card key={category.id}>
-                          <CardHeader>
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              />
-                              {category.name} ({categoryPins.length})
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            {categoryPins.map((pin) => {
+                  {tripDays.map((tripDay) => {
+                    const dayPins = pinsByDay[tripDay.day] || []
+                    return (
+                      <Card key={tripDay.day}>
+                        <CardHeader>
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            {tripDay.label}
+                            {dayPins.length > 0 && (
+                              <span className="text-xs font-normal text-muted-foreground">
+                                ({dayPins.length} {dayPins.length === 1 ? 'pin' : 'pins'})
+                              </span>
+                            )}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {dayPins.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-2">
+                              No pins scheduled for this day. {canEdit && "Add pins and assign them to this day."}
+                            </p>
+                          ) : (
+                            dayPins.map((pin) => {
+                              const category = pin.categories
                               const isSelected = selectedPin?.id === pin.id
                               return (
                                 <Card
                                   key={pin.id}
-                                  className={`cursor-pointer transition-colors ${
+                                  className={`transition-colors ${
                                     isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
                                   }`}
-                                  onClick={() => setSelectedPin(isSelected ? null : pin)}
                                 >
                                   <CardContent className="p-3">
                                     <div className="flex items-start gap-2">
                                       <div
                                         className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                        style={{ backgroundColor: category.color }}
+                                        style={{ backgroundColor: category?.color || "#3b82f6" }}
                                       />
-                                      <div className="flex-1 min-w-0">
+                                      <div 
+                                        className="flex-1 min-w-0 cursor-pointer"
+                                        onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                      >
+                                        <div className="flex items-center gap-2 mb-1">
+                                          {pin.time && (
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                              <Clock className="h-3 w-3" />
+                                              <span className="font-medium">{pin.time}</span>
+                                            </div>
+                                          )}
+                                          {category && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                              style={{
+                                                borderColor: category.color,
+                                                color: category.color,
+                                              }}
+                                            >
+                                              {category.name}
+                                            </Badge>
+                                          )}
+                                        </div>
                                         <h4 className="font-medium text-sm leading-tight line-clamp-1">
                                           {pin.name}
                                         </h4>
@@ -374,56 +605,187 @@ export function TripView({
                                           </p>
                                         )}
                                       </div>
+                                      {canEdit && (
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-7 w-7 shrink-0"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              <MoreVertical className="h-3.5 w-3.5" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={(e) => {
+                                              e.stopPropagation()
+                                              handleEditPin(pin)
+                                            }}>
+                                              <Edit className="h-4 w-4 mr-2" />
+                                              Edit Pin
+                                            </DropdownMenuItem>
+                                            {categories.length > 0 && (
+                                              <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  handleChangeCategory(pin, null)
+                                                }}>
+                                                  <Tag className="h-4 w-4 mr-2" />
+                                                  Remove Category
+                                                </DropdownMenuItem>
+                                                {categories.map((cat) => (
+                                                  <DropdownMenuItem
+                                                    key={cat.id}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation()
+                                                      handleChangeCategory(pin, cat.id)
+                                                    }}
+                                                  >
+                                                    <div className="flex items-center gap-2">
+                                                      <div
+                                                        className="h-2 w-2 rounded-full"
+                                                        style={{ backgroundColor: cat.color }}
+                                                      />
+                                                      {cat.name}
+                                                    </div>
+                                                  </DropdownMenuItem>
+                                                ))}
+                                              </>
+                                            )}
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                handlePinDelete(pin.id)
+                                              }}
+                                              className="text-destructive"
+                                            >
+                                              <Trash2 className="h-4 w-4 mr-2" />
+                                              Delete Pin
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      )}
                                     </div>
                                   </CardContent>
                                 </Card>
                               )
-                            })}
-                          </CardContent>
-                        </Card>
-                      )
-                    })
-                  ) : (
+                            })
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                  {pins.filter((p) => !p.day).length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-sm flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          All Pins ({pins.length})
+                          Unscheduled ({pins.filter((p) => !p.day).length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        {pins.map((pin) => {
-                          const category = pin.categories
-                          const isSelected = selectedPin?.id === pin.id
-                          return (
-                            <Card
-                              key={pin.id}
-                              className={`cursor-pointer transition-colors ${
-                                isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                              }`}
-                              onClick={() => setSelectedPin(isSelected ? null : pin)}
-                            >
-                              <CardContent className="p-3">
-                                <div className="flex items-start gap-2">
-                                  <div
-                                    className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
-                                    style={{ backgroundColor: category?.color || "#3b82f6" }}
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm leading-tight line-clamp-1">
-                                      {pin.name}
-                                    </h4>
-                                    {pin.description && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                        {pin.description}
-                                      </p>
+                        {pins
+                          .filter((p) => !p.day)
+                          .map((pin) => {
+                            const category = pin.categories
+                            const isSelected = selectedPin?.id === pin.id
+                            return (
+                              <Card
+                                key={pin.id}
+                                className={`transition-colors ${
+                                  isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
+                                }`}
+                              >
+                                <CardContent className="p-3">
+                                  <div className="flex items-start gap-2">
+                                    <div
+                                      className="h-2.5 w-2.5 rounded-full flex-shrink-0 mt-0.5 border border-border"
+                                      style={{ backgroundColor: category?.color || "#3b82f6" }}
+                                    />
+                                    <div 
+                                      className="flex-1 min-w-0 cursor-pointer"
+                                      onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                    >
+                                      <h4 className="font-medium text-sm leading-tight line-clamp-1">
+                                        {pin.name}
+                                      </h4>
+                                      {pin.description && (
+                                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                          {pin.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {canEdit && (
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <MoreVertical className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleEditPin(pin)
+                                          }}>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit Pin
+                                          </DropdownMenuItem>
+                                          {categories.length > 0 && (
+                                            <>
+                                              <DropdownMenuSeparator />
+                                              <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleChangeCategory(pin, null)
+                                              }}>
+                                                <Tag className="h-4 w-4 mr-2" />
+                                                Remove Category
+                                              </DropdownMenuItem>
+                                              {categories.map((cat) => (
+                                                <DropdownMenuItem
+                                                  key={cat.id}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleChangeCategory(pin, cat.id)
+                                                  }}
+                                                >
+                                                  <div className="flex items-center gap-2">
+                                                    <div
+                                                      className="h-2 w-2 rounded-full"
+                                                      style={{ backgroundColor: cat.color }}
+                                                    />
+                                                    {cat.name}
+                                                  </div>
+                                                </DropdownMenuItem>
+                                              ))}
+                                            </>
+                                          )}
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              handlePinDelete(pin.id)
+                                            }}
+                                            className="text-destructive"
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Delete Pin
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                     )}
                                   </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )
-                        })}
+                                </CardContent>
+                              </Card>
+                            )
+                          })}
                       </CardContent>
                     </Card>
                   )}
@@ -436,6 +798,9 @@ export function TripView({
                   tripId={trip.id}
                   categories={categories}
                   currentUserId={currentUserId}
+                  onCategoryCreated={(category) => {
+                    setCategories([...categories, category])
+                  }}
                 />
               </TabsContent>
             )}
@@ -463,6 +828,20 @@ export function TripView({
         pin={viewingPin}
         onDelete={handlePinDelete}
         canEdit={canEdit}
+      />
+      <PinEditDialog
+        open={isPinEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsPinEditDialogOpen(open)
+          if (!open) {
+            setEditingPin(null)
+          }
+        }}
+        pin={editingPin}
+        categories={categories}
+        onSave={handlePinUpdate}
+        tripStartDate={trip.start_date}
+        tripEndDate={trip.end_date}
       />
     </div>
   )

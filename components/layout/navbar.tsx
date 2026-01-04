@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, ArrowLeft, Share2 } from "lucide-react"
+import { Menu, X, ArrowLeft, Share2, Calendar } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { format, parseISO } from "date-fns"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +24,9 @@ interface NavbarProps {
     id: string
     name: string
     description?: string | null
+    start_date?: string | null
+    end_date?: string | null
+    label?: string | null
   }
   userRole?: "owner" | "editor" | "viewer"
 }
@@ -64,7 +69,7 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-card/80 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md">
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
@@ -75,10 +80,38 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <div>
-                    <h1 className="text-lg font-semibold">{trip.name}</h1>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-lg font-semibold">{trip.name}</h1>
+                      {trip.label && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {trip.label === "business" && "Business Trip"}
+                          {trip.label === "vacation" && "Vacation"}
+                          {trip.label === "family" && "Family Trip"}
+                          {trip.label === "adventure" && "Adventure"}
+                          {trip.label === "honeymoon" && "Honeymoon"}
+                          {trip.label === "backpacking" && "Backpacking"}
+                          {trip.label === "road-trip" && "Road Trip"}
+                          {trip.label === "solo" && "Solo Travel"}
+                          {trip.label === "group" && "Group Trip"}
+                          {!["business", "vacation", "family", "adventure", "honeymoon", "backpacking", "road-trip", "solo", "group"].includes(trip.label) && trip.label}
+                        </Badge>
+                      )}
+                    </div>
                     {trip.description && (
                       <p className="text-xs text-muted-foreground line-clamp-1">{trip.description}</p>
+                    )}
+                    {(trip.start_date || trip.end_date) && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {trip.start_date && format(parseISO(trip.start_date), "MMM d, yyyy")}
+                          {trip.start_date && trip.end_date && " to "}
+                          {trip.end_date && format(parseISO(trip.end_date), "MMM d, yyyy")}
+                          {trip.start_date && !trip.end_date && " onwards"}
+                          {!trip.start_date && trip.end_date && `Until ${format(parseISO(trip.end_date), "MMM d, yyyy")}`}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </>
@@ -177,9 +210,37 @@ export function Navbar({ trip, userRole }: NavbarProps = {}) {
             <div className="container mx-auto px-4 py-4 space-y-4">
               {isTripDetailPage && trip && (
                 <div className="pb-4 border-b">
-                  <h2 className="text-lg font-semibold mb-1">{trip.name}</h2>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h2 className="text-lg font-semibold flex-1">{trip.name}</h2>
+                    {trip.label && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {trip.label === "business" && "Business Trip"}
+                        {trip.label === "vacation" && "Vacation"}
+                        {trip.label === "family" && "Family Trip"}
+                        {trip.label === "adventure" && "Adventure"}
+                        {trip.label === "honeymoon" && "Honeymoon"}
+                        {trip.label === "backpacking" && "Backpacking"}
+                        {trip.label === "road-trip" && "Road Trip"}
+                        {trip.label === "solo" && "Solo Travel"}
+                        {trip.label === "group" && "Group Trip"}
+                        {!["business", "vacation", "family", "adventure", "honeymoon", "backpacking", "road-trip", "solo", "group"].includes(trip.label) && trip.label}
+                      </Badge>
+                    )}
+                  </div>
                   {trip.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{trip.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{trip.description}</p>
+                  )}
+                  {(trip.start_date || trip.end_date) && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        {trip.start_date && format(parseISO(trip.start_date), "MMM d, yyyy")}
+                        {trip.start_date && trip.end_date && " to "}
+                        {trip.end_date && format(parseISO(trip.end_date), "MMM d, yyyy")}
+                        {trip.start_date && !trip.end_date && " onwards"}
+                        {!trip.start_date && trip.end_date && `Until ${format(parseISO(trip.end_date), "MMM d, yyyy")}`}
+                      </span>
+                    </div>
                   )}
                   <Button
                     variant="outline"

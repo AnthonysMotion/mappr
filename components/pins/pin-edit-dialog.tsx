@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { LocationSearch } from "@/components/pins/location-search"
 
 interface Category {
   id: string
@@ -28,10 +29,23 @@ interface Category {
   icon: string | null
 }
 
-interface PinDialogProps {
+interface Pin {
+  id: string
+  name: string
+  description: string | null
+  latitude: number
+  longitude: number
+  category_id: string | null
+  categories: Category | null
+}
+
+interface PinEditDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  pin: Pin | null
+  categories: Category[]
   onSave: (data: {
+    id: string
     name: string
     description?: string
     categoryId?: string
@@ -40,30 +54,26 @@ interface PinDialogProps {
     day?: number
     time?: string
   }) => void
-  categories: Category[]
-  initialLocation: { lat: number; lng: number } | null
-  initialName?: string
   tripStartDate?: string | null
   tripEndDate?: string | null
 }
 
-export function PinDialog({
+export function PinEditDialog({
   open,
   onOpenChange,
-  onSave,
+  pin,
   categories,
-  initialLocation,
-  initialName,
+  onSave,
   tripStartDate,
   tripEndDate,
-}: PinDialogProps) {
+}: PinEditDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [categoryId, setCategoryId] = useState<string>("")
   const [day, setDay] = useState<string>("none")
   const [time, setTime] = useState("")
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
-  
+
   // Calculate available days based on trip dates
   const availableDays = (() => {
     if (!tripStartDate || !tripEndDate) return []
@@ -86,33 +96,29 @@ export function PinDialog({
   })()
 
   useEffect(() => {
-    if (initialLocation) {
-      setLocation(initialLocation)
+    if (pin) {
+      setName(pin.name)
+      setDescription(pin.description || "")
+      setCategoryId(pin.category_id || "")
+      setDay(pin.day?.toString() || "none")
+      setTime(pin.time || "")
+      setLocation({ lat: pin.latitude, lng: pin.longitude })
     }
-  }, [initialLocation])
+  }, [pin, open])
 
-  useEffect(() => {
-    if (initialName) {
-      setName(initialName)
+  const handleLocationSelect = (selectedLocation: { name: string; lat: number; lng: number }) => {
+    setLocation({ lat: selectedLocation.lat, lng: selectedLocation.lng })
+    if (!name) {
+      setName(selectedLocation.name)
     }
-  }, [initialName])
-
-  useEffect(() => {
-    if (!open) {
-      setName("")
-      setDescription("")
-      setCategoryId("")
-      setDay("none")
-      setTime("")
-      setLocation(null)
-    }
-  }, [open])
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!location) return
+    if (!pin || !location) return
 
     onSave({
+      id: pin.id,
       name,
       description: description || undefined,
       categoryId: categoryId && categoryId !== "none" ? categoryId : undefined,
@@ -123,21 +129,23 @@ export function PinDialog({
     })
   }
 
+  if (!pin) return null
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Pin</DialogTitle>
+          <DialogTitle>Edit Pin</DialogTitle>
           <DialogDescription>
-            Add a location to your trip map
+            Update pin details and location
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="edit-name">Name *</Label>
               <Input
-                id="name"
+                id="edit-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Location name"
@@ -145,19 +153,19 @@ export function PinDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="edit-description">Description</Label>
               <Textarea
-                id="description"
+                id="edit-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add details about this location..."
                 rows={3}
               />
             </div>
-            {categories.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={categoryId || undefined} onValueChange={(value) => setCategoryId(value === "none" ? "" : value)}>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Category</Label>
+              {categories.length > 0 ? (
+                <Select value={categoryId || "none"} onValueChange={(value) => setCategoryId(value === "none" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -176,14 +184,18 @@ export function PinDialog({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
+              ) : (
+                <div className="text-sm text-muted-foreground py-2 px-3 border border-border rounded-none">
+                  No categories available. Create one in the Categories tab.
+                </div>
+              )}
+            </div>
             {availableDays.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="day">Day</Label>
+                  <Label htmlFor="edit-day">Day</Label>
                   <Select 
-                    value={day} 
+                    value={day || "none"} 
                     onValueChange={(value) => {
                       setDay(value)
                       if (value === "none") setTime("")
@@ -203,29 +215,36 @@ export function PinDialog({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Time</Label>
+                  <Label htmlFor="edit-time">Time</Label>
                   <Input
-                    id="time"
+                    id="edit-time"
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    disabled={!day}
+                    disabled={!day || day === "none"}
+                    placeholder={day ? "Select time" : "Select day first"}
                   />
                 </div>
               </div>
             )}
-            {location && (
-              <div className="text-sm text-muted-foreground">
-                Location: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Location</Label>
+              <LocationSearch
+                onLocationSelect={handleLocationSelect}
+              />
+              {location && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Current: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={!location || !name}>
-              Add Pin
+              Save Changes
             </Button>
           </DialogFooter>
         </form>
@@ -233,3 +252,4 @@ export function PinDialog({
     </Dialog>
   )
 }
+

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -30,16 +30,37 @@ const TRIP_LABELS = [
   { value: "group", label: "Group Trip" },
 ]
 
-export function NewTripForm() {
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [label, setLabel] = useState("none")
+interface Trip {
+  id: string
+  name: string
+  description: string | null
+  start_date: string | null
+  end_date: string | null
+  label: string | null
+}
+
+interface EditTripFormProps {
+  trip: Trip
+}
+
+export function EditTripForm({ trip }: EditTripFormProps) {
+  const [name, setName] = useState(trip.name)
+  const [description, setDescription] = useState(trip.description || "")
+  const [startDate, setStartDate] = useState(trip.start_date ? trip.start_date.split('T')[0] : "")
+  const [endDate, setEndDate] = useState(trip.end_date ? trip.end_date.split('T')[0] : "")
+  const [label, setLabel] = useState(trip.label || "none")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    setName(trip.name)
+    setDescription(trip.description || "")
+    setStartDate(trip.start_date ? trip.start_date.split('T')[0] : "")
+    setEndDate(trip.end_date ? trip.end_date.split('T')[0] : "")
+    setLabel(trip.label || "none")
+  }, [trip])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +72,7 @@ export function NewTripForm() {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      setError("You must be logged in to create a trip")
+      setError("You must be logged in to edit a trip")
       setIsLoading(false)
       return
     }
@@ -63,18 +84,16 @@ export function NewTripForm() {
       return
     }
 
-    const { data: trip, error: tripError } = (await supabase
+    const { error: tripError } = (await supabase
       .from("trips")
-      .insert({
+      .update({
         name,
         description: description || null,
         start_date: startDate || null,
         end_date: endDate || null,
         label: label === "none" ? null : label,
-        created_by: user.id,
       } as any)
-      .select()
-      .single()) as any
+      .eq("id", trip.id)) as any
 
     if (tripError) {
       setError(tripError.message)
@@ -88,8 +107,8 @@ export function NewTripForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Trip Details</CardTitle>
-        <CardDescription>Create a new trip to start planning your adventure</CardDescription>
+        <CardTitle>Edit Trip</CardTitle>
+        <CardDescription>Update your trip details</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -175,10 +194,11 @@ export function NewTripForm() {
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Creating..." : "Create Trip"}
+            {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </CardFooter>
       </form>
     </Card>
   )
 }
+
