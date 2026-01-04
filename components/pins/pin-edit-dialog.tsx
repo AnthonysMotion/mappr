@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LocationSearch } from "@/components/pins/location-search"
+import { GoogleLocationSearch } from "@/components/pins/google-location-search"
 
 interface Category {
   id: string
@@ -36,6 +36,8 @@ interface Pin {
   latitude: number
   longitude: number
   category_id: string | null
+  place_id: string | null
+  place_data: any | null
   categories: Category | null
 }
 
@@ -73,6 +75,8 @@ export function PinEditDialog({
   const [day, setDay] = useState<string>("none")
   const [time, setTime] = useState("")
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [placeId, setPlaceId] = useState<string | undefined>(undefined)
+  const [placeData, setPlaceData] = useState<any | undefined>(undefined)
 
   // Calculate available days based on trip dates
   const availableDays = (() => {
@@ -103,11 +107,21 @@ export function PinEditDialog({
       setDay(pin.day?.toString() || "none")
       setTime(pin.time || "")
       setLocation({ lat: pin.latitude, lng: pin.longitude })
+      setPlaceId(pin.place_id || undefined)
+      setPlaceData(pin.place_data || undefined)
     }
   }, [pin, open])
 
-  const handleLocationSelect = (selectedLocation: { name: string; lat: number; lng: number }) => {
+  const handleLocationSelect = (selectedLocation: {
+    name: string
+    lat: number
+    lng: number
+    placeId?: string
+    placeDetails?: any
+  }) => {
     setLocation({ lat: selectedLocation.lat, lng: selectedLocation.lng })
+    setPlaceId(selectedLocation.placeId)
+    setPlaceData(selectedLocation.placeDetails)
     if (!name) {
       setName(selectedLocation.name)
     }
@@ -126,6 +140,8 @@ export function PinEditDialog({
       longitude: location.lng,
       day: day && day !== "none" ? parseInt(day) : undefined,
       time: time || undefined,
+      placeId: placeId,
+      placeData: placeData,
     })
   }
 
@@ -229,7 +245,7 @@ export function PinEditDialog({
             )}
             <div className="space-y-2">
               <Label htmlFor="edit-location">Location</Label>
-              <LocationSearch
+              <GoogleLocationSearch
                 onLocationSelect={handleLocationSelect}
               />
               {location && (

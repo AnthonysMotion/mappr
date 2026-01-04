@@ -49,6 +49,8 @@ interface Pin {
   category_id: string | null
   day: number | null
   time: string | null
+  place_id: string | null
+  place_data: any | null
   created_by: string
   categories: Category | null
 }
@@ -147,6 +149,8 @@ export function TripView({
     longitude: number
     day?: number
     time?: string
+    placeId?: string
+    placeData?: any
   }) => {
     const { data, error } = (await supabase
       .from("pins")
@@ -159,6 +163,8 @@ export function TripView({
         category_id: pinData.categoryId || null,
         day: pinData.day || null,
         time: pinData.time || null,
+        place_id: pinData.placeId || null,
+        place_data: pinData.placeData || null,
         created_by: currentUserId,
       } as any)
       .select(`
@@ -199,6 +205,8 @@ export function TripView({
     longitude: number
     day?: number
     time?: string
+    placeId?: string
+    placeData?: any
   }) => {
     const { data, error } = (await supabase
       .from("pins")
@@ -210,6 +218,8 @@ export function TripView({
         longitude: pinData.longitude,
         day: pinData.day || null,
         time: pinData.time || null,
+        place_id: pinData.placeId || null,
+        place_data: pinData.placeData || null,
       } as any)
       .eq("id", pinData.id)
       .select(`

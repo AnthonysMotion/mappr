@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { GoogleLocationSearch } from "@/components/pins/google-location-search"
 
 interface Category {
   id: string
@@ -39,6 +40,8 @@ interface PinDialogProps {
     longitude: number
     day?: number
     time?: string
+    placeId?: string
+    placeData?: any
   }) => void
   categories: Category[]
   initialLocation: { lat: number; lng: number } | null
@@ -63,6 +66,8 @@ export function PinDialog({
   const [day, setDay] = useState<string>("none")
   const [time, setTime] = useState("")
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [placeId, setPlaceId] = useState<string | undefined>(undefined)
+  const [placeData, setPlaceData] = useState<any | undefined>(undefined)
   
   // Calculate available days based on trip dates
   const availableDays = (() => {
@@ -91,6 +96,21 @@ export function PinDialog({
     }
   }, [initialLocation])
 
+  const handleLocationSelect = (selectedLocation: {
+    name: string
+    lat: number
+    lng: number
+    placeId?: string
+    placeDetails?: any
+  }) => {
+    setLocation({ lat: selectedLocation.lat, lng: selectedLocation.lng })
+    setPlaceId(selectedLocation.placeId)
+    setPlaceData(selectedLocation.placeDetails)
+    if (!name) {
+      setName(selectedLocation.name)
+    }
+  }
+
   useEffect(() => {
     if (initialName) {
       setName(initialName)
@@ -105,6 +125,8 @@ export function PinDialog({
       setDay("none")
       setTime("")
       setLocation(null)
+      setPlaceId(undefined)
+      setPlaceData(undefined)
     }
   }, [open])
 
@@ -120,6 +142,8 @@ export function PinDialog({
       longitude: location.lng,
       day: day && day !== "none" ? parseInt(day) : undefined,
       time: time || undefined,
+      placeId: placeId,
+      placeData: placeData,
     })
   }
 
@@ -214,11 +238,17 @@ export function PinDialog({
                 </div>
               </div>
             )}
-            {location && (
-              <div className="text-sm text-muted-foreground">
-                Location: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <GoogleLocationSearch
+                onLocationSelect={handleLocationSelect}
+              />
+              {location && (
+                <div className="text-xs text-muted-foreground">
+                  Selected: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

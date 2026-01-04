@@ -78,6 +78,8 @@ export interface Database {
           category_id: string | null
           day: number | null
           time: string | null
+          place_id: string | null
+          place_data: Json | null
           created_by: string
           created_at: string
           updated_at: string
@@ -92,6 +94,8 @@ export interface Database {
           category_id?: string | null
           day?: number | null
           time?: string | null
+          place_id?: string | null
+          place_data?: Json | null
           created_by: string
           created_at?: string
           updated_at?: string
@@ -106,6 +110,8 @@ export interface Database {
           category_id?: string | null
           day?: number | null
           time?: string | null
+          place_id?: string | null
+          place_data?: Json | null
           created_by?: string
           created_at?: string
           updated_at?: string
