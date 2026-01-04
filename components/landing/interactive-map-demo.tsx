@@ -191,7 +191,12 @@ const initialDemoPins = [
   },
 ]
 
-const demoRoutes = [
+const demoRoutes: Array<{
+  id: string
+  name: string
+  coordinates: [number, number][]
+  color: string
+}> = [
   {
     id: "route1",
     name: "Day 1 Itinerary",

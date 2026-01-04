@@ -84,15 +84,15 @@ export function EditTripForm({ trip }: EditTripFormProps) {
       return
     }
 
-    const { error: tripError } = (await supabase
-      .from("trips")
+    const { error: tripError } = (await (supabase
+      .from("trips") as any)
       .update({
         name,
         description: description || null,
         start_date: startDate || null,
         end_date: endDate || null,
         label: label === "none" ? null : label,
-      } as any)
+      })
       .eq("id", trip.id)) as any
 
     if (tripError) {

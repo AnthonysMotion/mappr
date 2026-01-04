@@ -208,8 +208,8 @@ export function TripView({
     placeId?: string
     placeData?: any
   }) => {
-    const { data, error } = (await supabase
-      .from("pins")
+    const { data, error } = (await (supabase
+      .from("pins") as any)
       .update({
         name: pinData.name,
         description: pinData.description || null,
@@ -220,7 +220,7 @@ export function TripView({
         time: pinData.time || null,
         place_id: pinData.placeId || null,
         place_data: pinData.placeData || null,
-      } as any)
+      })
       .eq("id", pinData.id)
       .select(`
         *,
@@ -243,11 +243,11 @@ export function TripView({
   }
 
   const handleChangeCategory = async (pin: Pin, categoryId: string | null) => {
-    const { data, error } = (await supabase
-      .from("pins")
+    const { data, error } = (await (supabase
+      .from("pins") as any)
       .update({
         category_id: categoryId,
-      } as any)
+      })
       .eq("id", pin.id)
       .select(`
         *,

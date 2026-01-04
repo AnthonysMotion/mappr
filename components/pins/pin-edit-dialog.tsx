@@ -38,6 +38,8 @@ interface Pin {
   category_id: string | null
   place_id: string | null
   place_data: any | null
+  day: number | null
+  time: string | null
   categories: Category | null
 }
 
@@ -55,6 +57,8 @@ interface PinEditDialogProps {
     longitude: number
     day?: number
     time?: string
+    placeId?: string
+    placeData?: any
   }) => void
   tripStartDate?: string | null
   tripEndDate?: string | null
