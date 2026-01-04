@@ -534,7 +534,10 @@ export function TripView({
 
       {/* Timeline Bottom Bar */}
       <div className={`border-t bg-card transition-all duration-300 ${timelineExpanded ? 'h-64' : 'h-12'}`}>
-        <div className="flex items-center justify-between h-12 px-4 border-b">
+        <div 
+          className="flex items-center justify-between h-12 px-4 border-b cursor-pointer hover:bg-accent/5 transition-colors"
+          onClick={() => setTimelineExpanded(!timelineExpanded)}
+        >
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="font-medium">Timeline</span>
@@ -544,18 +547,13 @@ export function TripView({
               </span>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setTimelineExpanded(!timelineExpanded)}
-          >
+          <div className="flex items-center">
             {timelineExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronUp className="h-4 w-4" />
             )}
-          </Button>
+          </div>
         </div>
         {timelineExpanded && (
           <div className="h-[calc(16rem-3rem)] overflow-x-auto overflow-y-hidden p-4">
