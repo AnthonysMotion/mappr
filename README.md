@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trip Planner - Collaborative Travel Planning App
+
+A beautiful, collaborative trip planning web application built with Next.js, Tailwind CSS, shadcn/ui, Supabase, and mapcn.
+
+## Features
+
+- 🗺️ **Interactive Maps** - Pin locations on beautiful maps using mapcn
+- 👥 **Collaborative Planning** - Share trips with friends and family
+- 📍 **Customizable Pins** - Categorize and customize location pins
+- 📝 **Lists** - Create lists for stores, things to do, and things to see
+- 🔄 **Real-time Updates** - See changes from collaborators in real-time
+- 🔐 **Authentication** - Secure user authentication via Supabase
+
+## Tech Stack
+
+- **Next.js 16** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - UI components
+- **mapcn** - Map components
+- **Supabase** - Authentication & Database
+- **Supabase Realtime** - Real-time collaboration
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ 
+- A Supabase account and project
+
+### Setup
+
+1. **Clone the repository**
+
+```bash
+git clone <your-repo-url>
+cd mappr
+```
+
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Set up Supabase**
+
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Go to SQL Editor and run the migration from `supabase/migrations/001_initial_schema.sql`
+   - If you encounter "infinite recursion" errors, run `supabase/migrations/004_fix_all_policies_no_recursion.sql` which fixes all circular dependencies
+   - Get your project URL and anon key from Settings > API
+   - Enable Realtime for the following tables: `pins`, `categories`, `list_items` (Database > Replication)
+
+4. **Configure environment variables**
+
+   Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+5. **Run the development server**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Schema
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The application uses the following main tables:
 
-## Learn More
+- **trips** - Trip information
+- **collaborators** - User access control for trips
+- **pins** - Location pins on the map
+- **categories** - Pin categories with colors
+- **list_items** - List items (stores, things to do, things to see)
 
-To learn more about Next.js, take a look at the following resources:
+## Features Overview
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Trip Management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Create new trips
+- View all your trips
+- Share trips with others
+- Set collaborator roles (owner, editor, viewer)
 
-## Deploy on Vercel
+### Map Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Click on map to add pins
+- View all pins with custom categories
+- Pin popups with details
+- Real-time pin updates
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Lists
+
+- Three list types: Stores, Things to Do, Things to See
+- Link list items to map pins
+- Mark items as completed
+- Real-time list updates
+
+### Categories
+
+- Create custom categories for pins
+- Assign colors to categories
+- Organize pins by category
+
+## Deployment
+
+The app can be deployed to Vercel:
+
+1. Push your code to GitHub
+2. Import your repository to Vercel
+3. Add environment variables
+4. Deploy
+
+Make sure to also configure your Supabase project settings for production.
+
+## License
+
+MIT
