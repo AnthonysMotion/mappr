@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Chrome } from "lucide-react"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -55,6 +57,24 @@ export function LoginForm() {
     setIsLoading(false)
   }
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
+    }
+    // Note: If successful, user will be redirected to Google, so we don't set loading to false here
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -93,7 +113,7 @@ export function LoginForm() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Loading..." : "Sign In"}
           </Button>
@@ -105,6 +125,23 @@ export function LoginForm() {
             disabled={isLoading}
           >
             Sign Up
+          </Button>
+          
+          <div className="flex items-center gap-4 w-full">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">OR</span>
+            <Separator className="flex-1" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            <Chrome className="mr-2 h-4 w-4" />
+            Continue with Google
           </Button>
         </CardFooter>
       </form>
