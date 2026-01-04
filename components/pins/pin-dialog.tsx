@@ -40,6 +40,7 @@ interface PinDialogProps {
   }) => void
   categories: Category[]
   initialLocation: { lat: number; lng: number } | null
+  initialName?: string
 }
 
 export function PinDialog({
@@ -48,6 +49,7 @@ export function PinDialog({
   onSave,
   categories,
   initialLocation,
+  initialName,
 }: PinDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -59,6 +61,12 @@ export function PinDialog({
       setLocation(initialLocation)
     }
   }, [initialLocation])
+
+  useEffect(() => {
+    if (initialName) {
+      setName(initialName)
+    }
+  }, [initialName])
 
   useEffect(() => {
     if (!open) {

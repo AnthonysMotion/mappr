@@ -4,11 +4,13 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { MapMarker, MarkerContent, MarkerPopup, MapControls } from "@/components/ui/map"
 import { ClickableMap } from "@/components/trips/clickable-map"
+import { MapFlyTo } from "@/components/trips/map-fly-to"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PinDialog } from "@/components/pins/pin-dialog"
+import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
 import { TripLists } from "@/components/lists/trip-lists"
 import { ShareTripDialog } from "@/components/trips/share-trip-dialog"
@@ -73,6 +75,8 @@ export function TripView({
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null)
   const [isPinDialogOpen, setIsPinDialogOpen] = useState(false)
   const [mapClickLocation, setMapClickLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [pinDialogInitialName, setPinDialogInitialName] = useState<string | undefined>(undefined)
+  const [flyToLocation, setFlyToLocation] = useState<[number, number] | null>(null)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const supabase = createClient()
 
@@ -149,6 +153,7 @@ export function TripView({
   const handleMapClick = (e: { lngLat: { lng: number; lat: number } }) => {
     if (!canEdit) return
     setMapClickLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng })
+    setPinDialogInitialName(undefined)
     setIsPinDialogOpen(true)
   }
 
@@ -180,7 +185,18 @@ export function TripView({
       setPins([data as Pin, ...pins])
       setIsPinDialogOpen(false)
       setMapClickLocation(null)
+      setPinDialogInitialName(undefined)
     }
+  }
+
+  const handleLocationSearch = (location: { name: string; lat: number; lng: number }) => {
+    if (!canEdit) return
+    // Fly to the location on the map
+    setFlyToLocation([location.lng, location.lat])
+    // Set the location and open the pin dialog with the location name pre-filled
+    setMapClickLocation({ lat: location.lat, lng: location.lng })
+    setPinDialogInitialName(location.name)
+    setIsPinDialogOpen(true)
   }
 
   const handlePinDelete = async (pinId: string) => {
@@ -235,6 +251,11 @@ export function TripView({
             zoom={pins.length > 0 ? 10 : 2}
             onMapClick={canEdit ? handleMapClick : undefined}
           >
+            <MapFlyTo
+              center={flyToLocation}
+              zoom={14}
+              onComplete={() => setFlyToLocation(null)}
+            />
             <MapControls showZoom showLocate />
             {pins.map((pin) => {
               const category = pin.categories
@@ -290,11 +311,20 @@ export function TripView({
             })}
           </ClickableMap>
           {canEdit && (
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-10 w-96 max-w-[calc(100%-2rem)]">
               <Card className="shadow-lg">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Click on the map to add a pin</CardTitle>
+                  <CardTitle className="text-sm mb-3">Search for a location</CardTitle>
+                  <LocationSearch
+                    onLocationSelect={handleLocationSearch}
+                    disabled={!canEdit}
+                  />
                 </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-xs text-muted-foreground">
+                    Or click on the map to add a pin
+                  </p>
+                </CardContent>
               </Card>
             </div>
           )}
@@ -382,10 +412,17 @@ export function TripView({
       {/* Dialogs */}
       <PinDialog
         open={isPinDialogOpen}
-        onOpenChange={setIsPinDialogOpen}
+        onOpenChange={(open) => {
+          setIsPinDialogOpen(open)
+          if (!open) {
+            setMapClickLocation(null)
+            setPinDialogInitialName(undefined)
+          }
+        }}
         onSave={handlePinSave}
         categories={categories}
         initialLocation={mapClickLocation}
+        initialName={pinDialogInitialName}
       />
       <ShareTripDialog
         open={isShareDialogOpen}
