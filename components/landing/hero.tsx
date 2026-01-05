@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Play } from "lucide-react"
+import { ArrowRight, Play, Github } from "lucide-react"
 
 export function Hero() {
   const scrollToDemo = () => {
@@ -28,7 +28,7 @@ export function Hero() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link href="/auth/login">
               <Button size="lg">
                 Get Started
@@ -43,6 +43,15 @@ export function Hero() {
               <Play className="mr-2 h-4 w-4" />
               Try Demo
             </Button>
+            <a
+              href="https://github.com/AnthonysMotion/mappr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="View on GitHub"
+            >
+              <Github className="h-5 w-5" />
+            </a>
           </div>
         </div>
       </div>

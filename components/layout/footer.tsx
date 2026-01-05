@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Github } from "lucide-react"
 
 export function Footer() {
   return (
@@ -18,6 +19,15 @@ export function Footer() {
             <Link href="/cookies" className="text-muted-foreground hover:text-foreground transition-colors">
               Cookies
             </Link>
+            <a
+              href="https://github.com/AnthonysMotion/mappr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="View on GitHub"
+            >
+              <Github className="h-4 w-4" />
+            </a>
           </div>
         </div>
       </div>
