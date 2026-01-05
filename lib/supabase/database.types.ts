@@ -80,6 +80,7 @@ export interface Database {
           time: string | null
           place_id: string | null
           place_data: Json | null
+          icon: string | null
           created_by: string
           created_at: string
           updated_at: string
@@ -96,6 +97,7 @@ export interface Database {
           time?: string | null
           place_id?: string | null
           place_data?: Json | null
+          icon?: string | null
           created_by: string
           created_at?: string
           updated_at?: string
@@ -112,6 +114,7 @@ export interface Database {
           time?: string | null
           place_id?: string | null
           place_data?: Json | null
+          icon?: string | null
           created_by?: string
           created_at?: string
           updated_at?: string

@@ -15,6 +15,7 @@ import { PinEditDialog } from "@/components/pins/pin-edit-dialog"
 import { LocationSearch } from "@/components/pins/location-search"
 import { CategoryManager } from "@/components/categories/category-manager"
 import { Calendar, MoreVertical, Edit, Tag, Trash2, Clock, ChevronUp, ChevronDown } from "lucide-react"
+import * as LucideIcons from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +52,7 @@ interface Pin {
   time: string | null
   place_id: string | null
   place_data: any | null
+  icon: string | null
   created_by: string
   categories: Category | null
 }
@@ -151,6 +153,7 @@ export function TripView({
     time?: string
     placeId?: string
     placeData?: any
+    icon?: string | null
   }) => {
     const { data, error } = (await supabase
       .from("pins")
@@ -165,6 +168,7 @@ export function TripView({
         time: pinData.time || null,
         place_id: pinData.placeId || null,
         place_data: pinData.placeData || null,
+        icon: pinData.icon || null,
         created_by: currentUserId,
       } as any)
       .select(`
@@ -207,6 +211,7 @@ export function TripView({
     time?: string
     placeId?: string
     placeData?: any
+    icon?: string | null
   }) => {
     const { data, error } = (await (supabase
       .from("pins") as any)
@@ -220,6 +225,7 @@ export function TripView({
         time: pinData.time || null,
         place_id: pinData.placeId || null,
         place_data: pinData.placeData || null,
+        icon: pinData.icon || null,
       })
       .eq("id", pinData.id)
       .select(`
@@ -421,19 +427,50 @@ export function TripView({
                   latitude={Number(pin.latitude)}
                 >
                   <MarkerContent>
-                    <div
-                      className={`h-4 w-4 rounded-full border-2 border-background cursor-pointer transition-all ${
-                        isSelected ? "ring-2 ring-primary" : ""
-                      }`}
-                      style={{
-                        backgroundColor: category?.color || "#3b82f6",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setViewingPin(pin)
-                        setIsPinViewDialogOpen(true)
-                      }}
-                    />
+                    {(() => {
+                      // Priority: pin icon > category icon > colored circle
+                      const iconName = pin.icon || category?.icon || null
+                      const iconColor = category?.color || "#3b82f6"
+                      
+                      if (iconName && iconName in LucideIcons) {
+                        const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as any
+                        return IconComponent ? (
+                          <div
+                            className={`cursor-pointer transition-all ${
+                              isSelected ? "ring-2 ring-primary rounded-full" : ""
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setViewingPin(pin)
+                              setIsPinViewDialogOpen(true)
+                            }}
+                          >
+                            <IconComponent
+                              className="h-5 w-5"
+                              style={{ color: iconColor }}
+                              fill={iconColor}
+                              fillOpacity={0.2}
+                            />
+                          </div>
+                        ) : null
+                      }
+                      
+                      return (
+                        <div
+                          className={`h-4 w-4 rounded-full border-2 border-background cursor-pointer transition-all ${
+                            isSelected ? "ring-2 ring-primary" : ""
+                          }`}
+                          style={{
+                            backgroundColor: iconColor,
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setViewingPin(pin)
+                            setIsPinViewDialogOpen(true)
+                          }}
+                        />
+                      )
+                    })()}
                   </MarkerContent>
                   <MarkerPopup>
                     <Card>

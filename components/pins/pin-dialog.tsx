@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator"
 import { MapPin, Star, Clock, Phone, Globe, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { TimePicker } from "@/components/ui/time-picker"
+import { IconPicker } from "@/components/ui/icon-picker"
 
 interface Category {
   id: string
@@ -46,6 +47,7 @@ interface PinDialogProps {
     time?: string
     placeId?: string
     placeData?: any
+    icon?: string | null
   }) => void
   categories: Category[]
   initialLocation: { lat: number; lng: number } | null
@@ -72,6 +74,7 @@ export function PinDialog({
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [placeId, setPlaceId] = useState<string | undefined>(undefined)
   const [placeData, setPlaceData] = useState<any | undefined>(undefined)
+  const [icon, setIcon] = useState<string | null>(null)
   
   // Calculate available days based on trip dates
   const availableDays = (() => {
@@ -135,6 +138,7 @@ export function PinDialog({
       setLocation(null)
       setPlaceId(undefined)
       setPlaceData(undefined)
+      setIcon(null)
     }
   }, [open])
 
@@ -152,6 +156,7 @@ export function PinDialog({
       time: time || undefined,
       placeId: placeId,
       placeData: placeData,
+      icon: icon,
     })
   }
 
@@ -210,6 +215,11 @@ export function PinDialog({
                 </Select>
               </div>
             )}
+            <IconPicker
+              value={icon}
+              onChange={setIcon}
+              label="Icon (optional)"
+            />
             {availableDays.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

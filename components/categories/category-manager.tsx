@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2 } from "lucide-react"
+import * as LucideIcons from "lucide-react"
+import { IconPicker } from "@/components/ui/icon-picker"
 import {
   Dialog,
   DialogContent,
@@ -52,6 +54,7 @@ export function CategoryManager({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [name, setName] = useState("")
   const [color, setColor] = useState(DEFAULT_COLORS[0])
+  const [icon, setIcon] = useState<string | null>(null)
   const supabase = createClient()
 
   // Update local state when initialCategories changes
@@ -68,6 +71,7 @@ export function CategoryManager({
         trip_id: tripId,
         name,
         color,
+        icon,
       } as any)
       .select()
       .single()) as any
@@ -81,6 +85,7 @@ export function CategoryManager({
       }
       setName("")
       setColor(DEFAULT_COLORS[0])
+      setIcon(null)
       setIsDialogOpen(false)
     }
   }
@@ -115,10 +120,27 @@ export function CategoryManager({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="h-5 w-5 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
+                    {category.icon && category.icon in LucideIcons ? (
+                      (() => {
+                        const IconComponent = LucideIcons[category.icon as keyof typeof LucideIcons] as any
+                        return IconComponent ? (
+                          <IconComponent
+                            className="h-5 w-5"
+                            style={{ color: category.color }}
+                          />
+                        ) : (
+                          <div
+                            className="h-5 w-5 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                        )
+                      })()
+                    ) : (
+                      <div
+                        className="h-5 w-5 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                    )}
                     <span className="font-medium">{category.name}</span>
                   </div>
                   <Button
@@ -172,6 +194,11 @@ export function CategoryManager({
                   ))}
                 </div>
               </div>
+              <IconPicker
+                value={icon}
+                onChange={setIcon}
+                label="Icon (optional)"
+              />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
