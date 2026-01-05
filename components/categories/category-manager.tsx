@@ -31,6 +31,7 @@ interface CategoryManagerProps {
   categories: Category[]
   currentUserId: string
   onCategoryCreated?: (category: Category) => void
+  onCategoryDeleted?: (categoryId: string) => void
 }
 
 const DEFAULT_COLORS = [
@@ -49,6 +50,7 @@ export function CategoryManager({
   categories: initialCategories,
   currentUserId,
   onCategoryCreated,
+  onCategoryDeleted,
 }: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -91,9 +93,25 @@ export function CategoryManager({
   }
 
   const handleDelete = async (categoryId: string) => {
+    // First, update all pins that use this category to set category_id to null
+    const { error: pinsError } = await (supabase
+      .from("pins") as any)
+      .update({ category_id: null })
+      .eq("category_id", categoryId)
+    
+    if (pinsError) {
+      console.error("Error updating pins:", pinsError)
+      return
+    }
+
+    // Then delete the category
     const { error } = await supabase.from("categories").delete().eq("id", categoryId)
     if (!error) {
       setCategories(categories.filter((c) => c.id !== categoryId))
+      // Notify parent component
+      if (onCategoryDeleted) {
+        onCategoryDeleted(categoryId)
+      }
     }
   }
 

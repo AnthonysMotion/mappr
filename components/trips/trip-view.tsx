@@ -653,6 +653,23 @@ export function TripView({
                   onCategoryCreated={(category) => {
                     setCategories([...categories, category])
                   }}
+                  onCategoryDeleted={async (categoryId) => {
+                    // Update categories state
+                    setCategories(categories.filter((c) => c.id !== categoryId))
+                    // Update pins that were using this category
+                    setPins(
+                      pins.map((pin) => {
+                        if (pin.category_id === categoryId) {
+                          return {
+                            ...pin,
+                            category_id: null,
+                            categories: null,
+                          }
+                        }
+                        return pin
+                      })
+                    )
+                  }}
                 />
               </TabsContent>
             )}
