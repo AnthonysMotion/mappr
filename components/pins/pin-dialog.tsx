@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { GoogleLocationSearch } from "@/components/pins/google-location-search"
+import { Separator } from "@/components/ui/separator"
+import { MapPin, Star, Clock, Phone, Globe, ExternalLink } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface Category {
   id: string
@@ -109,6 +112,10 @@ export function PinDialog({
     if (!name) {
       setName(selectedLocation.name)
     }
+    // Debug: Log place data
+    if (selectedLocation.placeDetails) {
+      console.log("Place data received:", selectedLocation.placeDetails)
+    }
   }
 
   useEffect(() => {
@@ -149,15 +156,15 @@ export function PinDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Pin</DialogTitle>
           <DialogDescription>
             Add a location to your trip map
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -249,8 +256,130 @@ export function PinDialog({
                 </div>
               )}
             </div>
+
+            {/* Place Data Preview */}
+            {placeData && (
+              <>
+                <Separator className="my-4" />
+                <div className="space-y-3 bg-muted/30 p-3 rounded-lg border">
+                  <h4 className="text-sm font-semibold">Location Details</h4>
+                  
+                  {placeData.rating && (
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm font-medium">{placeData.rating}</span>
+                      {placeData.user_ratings_total && (
+                        <span className="text-xs text-muted-foreground">
+                          ({placeData.user_ratings_total.toLocaleString()} reviews)
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {placeData.formatted_address && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{placeData.formatted_address}</p>
+                    </div>
+                  )}
+
+                  {placeData.opening_hours && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {placeData.opening_hours.open_now ? (
+                            <span className="text-green-600">Open now</span>
+                          ) : (
+                            <span className="text-red-600">Closed now</span>
+                          )}
+                        </span>
+                      </div>
+                      {placeData.opening_hours.weekday_text && (
+                        <div className="pl-6 space-y-0.5">
+                          {placeData.opening_hours.weekday_text.slice(0, 3).map((day: string, idx: number) => (
+                            <p key={idx} className="text-xs text-muted-foreground">{day}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {(placeData.formatted_phone_number || placeData.international_phone_number || placeData.phone_number) && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a
+                        href={`tel:${placeData.formatted_phone_number || placeData.international_phone_number || placeData.phone_number}`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {placeData.formatted_phone_number || placeData.international_phone_number || placeData.phone_number}
+                      </a>
+                    </div>
+                  )}
+
+                  {placeData.website && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <a
+                        href={placeData.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        Website
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+
+                  {placeData.price_level !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Price:</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4].map((level) => (
+                          <span
+                            key={level}
+                            className={`text-sm ${
+                              level <= placeData.price_level
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            $
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {placeData.types && placeData.types.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {placeData.types.slice(0, 3).map((type: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {placeData.reviews && placeData.reviews.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-xs font-medium">Top Review</h5>
+                      <div className="text-xs space-y-1 border-l-2 border-border pl-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">{placeData.reviews[0].rating}</span>
+                          <span className="text-muted-foreground">· {placeData.reviews[0].author_name}</span>
+                        </div>
+                        <p className="text-muted-foreground line-clamp-2">{placeData.reviews[0].text}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-4 shrink-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

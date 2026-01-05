@@ -260,6 +260,72 @@ export function TripView({
     }
   }
 
+  const handlePinDayChange = async (pinId: string, newDay: number | null) => {
+    if (!canEdit) return
+
+    const updateData: any = {
+      day: newDay,
+    }
+    
+    // Clear time if removing from day
+    if (newDay === null) {
+      updateData.time = null
+    }
+
+    const { data, error } = (await (supabase
+      .from("pins") as any)
+      .update(updateData)
+      .eq("id", pinId)
+      .select(`
+        *,
+        categories(*)
+      `)
+      .single()) as any
+
+    if (!error && data) {
+      setPins(pins.map((p) => (p.id === pinId ? (data as Pin) : p)))
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent, pin: Pin) => {
+    if (!canEdit) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("application/json", JSON.stringify({ pinId: pin.id }))
+    e.currentTarget.classList.add("opacity-50")
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove("opacity-50")
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!canEdit) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    e.currentTarget.classList.add("ring-2", "ring-primary", "ring-offset-2")
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove("ring-2", "ring-primary", "ring-offset-2")
+  }
+
+  const handleDrop = (e: React.DragEvent, targetDay: number | null) => {
+    if (!canEdit) return
+    e.preventDefault()
+    e.currentTarget.classList.remove("ring-2", "ring-primary", "ring-offset-2")
+    
+    try {
+      const data = JSON.parse(e.dataTransfer.getData("application/json"))
+      if (data.pinId) {
+        handlePinDayChange(data.pinId, targetDay)
+      }
+    } catch (error) {
+      console.error("Error parsing drag data:", error)
+    }
+  }
 
   // Calculate trip days
   const tripDays = (() => {
@@ -429,7 +495,10 @@ export function TripView({
                   return (
                     <Card
                       key={pin.id}
-                      className="transition-colors hover:bg-accent/5"
+                      className={`transition-colors hover:bg-accent/5 ${canEdit ? "cursor-move" : ""}`}
+                      draggable={canEdit}
+                      onDragStart={(e) => handleDragStart(e, pin)}
+                      onDragEnd={handleDragEnd}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
@@ -583,7 +652,13 @@ export function TripView({
                 {tripDays.map((tripDay) => {
                   const dayPins = pinsByDay[tripDay.day] || []
                   return (
-                    <Card key={tripDay.day} className="min-w-80 shrink-0 h-full flex flex-col">
+                    <Card 
+                      key={tripDay.day} 
+                      className="min-w-80 shrink-0 h-full flex flex-col"
+                      onDragOver={canEdit ? handleDragOver : undefined}
+                      onDragLeave={canEdit ? handleDragLeave : undefined}
+                      onDrop={canEdit ? (e) => handleDrop(e, tripDay.day) : undefined}
+                    >
                       <CardHeader className="pb-2 shrink-0">
                         <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                           <Calendar className="h-4 w-4" />
@@ -598,11 +673,18 @@ export function TripView({
                           )}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="flex-1 overflow-x-auto overflow-y-hidden">
+                      <CardContent 
+                        className="flex-1 overflow-x-auto overflow-y-hidden min-h-[4rem]"
+                        onDragOver={canEdit ? handleDragOver : undefined}
+                        onDragLeave={canEdit ? handleDragLeave : undefined}
+                        onDrop={canEdit ? (e) => handleDrop(e, tripDay.day) : undefined}
+                      >
                         {dayPins.length === 0 ? (
-                          <p className="text-xs text-muted-foreground py-2">
-                            No pins scheduled. {canEdit && "Add pins and assign them to this day."}
-                          </p>
+                          <div className="text-xs text-muted-foreground py-2 h-full flex items-center justify-center border-2 border-dashed border-border rounded-lg">
+                            <p>
+                              {canEdit ? "Drop pins here or add pins and assign them to this day." : "No pins scheduled."}
+                            </p>
+                          </div>
                         ) : (
                           <div className="flex gap-2 h-full">
                             {dayPins.map((pin) => {
@@ -613,8 +695,11 @@ export function TripView({
                                   key={pin.id}
                                   className={`transition-colors cursor-pointer shrink-0 w-48 ${
                                     isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                                  }`}
+                                  } ${canEdit ? "cursor-move" : ""}`}
                                   onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                  draggable={canEdit}
+                                  onDragStart={(e) => handleDragStart(e, pin)}
+                                  onDragEnd={handleDragEnd}
                                 >
                                   <CardContent className="p-2">
                                     <div className="flex items-start gap-2">
@@ -663,14 +748,24 @@ export function TripView({
                   )
                 })}
                 {pins.filter((p) => !p.day).length > 0 && (
-                  <Card className="min-w-80 shrink-0 h-full flex flex-col">
+                  <Card 
+                    className="min-w-80 shrink-0 h-full flex flex-col"
+                    onDragOver={canEdit ? handleDragOver : undefined}
+                    onDragLeave={canEdit ? handleDragLeave : undefined}
+                    onDrop={canEdit ? (e) => handleDrop(e, null) : undefined}
+                  >
                     <CardHeader className="pb-2 shrink-0">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         Unscheduled ({pins.filter((p) => !p.day).length})
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 overflow-x-auto overflow-y-hidden">
+                    <CardContent 
+                      className="flex-1 overflow-x-auto overflow-y-hidden min-h-[4rem]"
+                      onDragOver={canEdit ? handleDragOver : undefined}
+                      onDragLeave={canEdit ? handleDragLeave : undefined}
+                      onDrop={canEdit ? (e) => handleDrop(e, null) : undefined}
+                    >
                       <div className="flex gap-2 h-full">
                         {pins
                           .filter((p) => !p.day)
@@ -682,8 +777,11 @@ export function TripView({
                                 key={pin.id}
                                 className={`transition-colors cursor-pointer shrink-0 w-48 ${
                                   isSelected ? "ring-2 ring-primary" : "hover:bg-accent/5"
-                                }`}
+                                } ${canEdit ? "cursor-move" : ""}`}
                                 onClick={() => setSelectedPin(isSelected ? null : pin)}
+                                draggable={canEdit}
+                                onDragStart={(e) => handleDragStart(e, pin)}
+                                onDragEnd={handleDragEnd}
                               >
                                 <CardContent className="p-2">
                                   <div className="flex items-start gap-2">

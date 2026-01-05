@@ -16,13 +16,15 @@ export async function GET(request: NextRequest) {
 
   try {
     // Use Places Details API with specific fields
+    // Note: Use formatted_phone_number instead of phone_number
     const fields = [
       "name",
       "formatted_address",
       "rating",
       "user_ratings_total",
       "opening_hours",
-      "phone_number",
+      "formatted_phone_number",
+      "international_phone_number",
       "website",
       "photos",
       "geometry",
@@ -41,8 +43,26 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
 
+    if (data.status === "REQUEST_DENIED") {
+      console.error("Places API denied:", data.error_message)
+      return NextResponse.json({ error: "API access denied. Check API key and billing." }, { status: 403 })
+    }
+
+    if (data.status === "INVALID_REQUEST") {
+      console.error("Places API invalid request:", data.error_message)
+      // This can happen if the place_id is from Geocoding API, not Places API
+      return NextResponse.json({ 
+        error: "Invalid place ID. This location may not have detailed place information available.",
+        status: "INVALID_REQUEST"
+      }, { status: 400 })
+    }
+
     if (data.status !== "OK") {
-      throw new Error(`Google Places API error: ${data.status}`)
+      console.error("Places API error:", data.status, data.error_message)
+      return NextResponse.json({ 
+        error: data.error_message || `Google Places API error: ${data.status}`,
+        status: data.status
+      }, { status: 400 })
     }
 
     return NextResponse.json(data.result)

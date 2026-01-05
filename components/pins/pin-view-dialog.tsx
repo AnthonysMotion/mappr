@@ -52,15 +52,47 @@ export function PinViewDialog({
   const [placeData, setPlaceData] = useState<any | null>(pin?.place_data || null)
   const [isLoadingPlaceData, setIsLoadingPlaceData] = useState(false)
 
-  // Fetch place data if pin has place_id but no place_data
+  // Fetch place data if pin has place_id but no place_data, or try to find nearby places
   useEffect(() => {
-    if (pin && pin.place_id && !pin.place_data && open) {
+    if (!pin || !open) {
+      setPlaceData(null)
+      return
+    }
+
+    // If pin has place_data, use it
+    if (pin.place_data) {
+      setPlaceData(pin.place_data)
+      return
+    }
+
+    // If pin has place_id but no place_data, fetch it
+    if (pin.place_id && !pin.place_data) {
       setIsLoadingPlaceData(true)
       fetch(`/api/places/details?placeId=${encodeURIComponent(pin.place_id)}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data && !data.error) {
+          if (data && !data.error && !data.status) {
+            // Successfully got place details
             setPlaceData(data)
+          } else if (data && data.status === "INVALID_REQUEST") {
+            // Place ID might be from geocoding, not Places API
+            // Try to get address via reverse geocoding instead
+            if (pin.latitude && pin.longitude) {
+              fetch(`/api/places/nearby?lat=${pin.latitude}&lng=${pin.longitude}`)
+                .then((res) => res.json())
+                .then((geocodeData) => {
+                  if (geocodeData && !geocodeData.error && geocodeData.length > 0) {
+                    setPlaceData({
+                      formatted_address: geocodeData[0].formatted_address,
+                      geometry: geocodeData[0].geometry,
+                      types: geocodeData[0].types,
+                    })
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error fetching geocoding data:", error)
+                })
+            }
           }
         })
         .catch((error) => {
@@ -69,10 +101,61 @@ export function PinViewDialog({
         .finally(() => {
           setIsLoadingPlaceData(false)
         })
-    } else if (pin?.place_data) {
-      setPlaceData(pin.place_data)
-    } else {
-      setPlaceData(null)
+      return
+    }
+
+    // If no place_id, try to find nearby place using coordinates
+    if (!pin.place_id && pin.latitude && pin.longitude) {
+      setIsLoadingPlaceData(true)
+      // Use reverse geocoding to get address information
+      fetch(`/api/places/nearby?lat=${pin.latitude}&lng=${pin.longitude}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && !data.error && data.length > 0) {
+            const geocodeResult = data[0]
+            
+            // Try to get place details, but if it fails (INVALID_REQUEST), use geocoding data
+            if (geocodeResult.place_id) {
+              return fetch(`/api/places/details?placeId=${encodeURIComponent(geocodeResult.place_id)}`)
+                .then((res) => res.json())
+                .then((details) => {
+                  if (details && !details.error && !details.status) {
+                    // Successfully got place details
+                    setPlaceData(details)
+                  } else if (details.status === "INVALID_REQUEST") {
+                    // Place ID from geocoding doesn't work with Places Details API
+                    // Use geocoding data instead (at least we have address)
+                    setPlaceData({
+                      formatted_address: geocodeResult.formatted_address,
+                      geometry: geocodeResult.geometry,
+                      types: geocodeResult.types,
+                    })
+                  }
+                })
+                .catch((error) => {
+                  // Fallback to geocoding data
+                  setPlaceData({
+                    formatted_address: geocodeResult.formatted_address,
+                    geometry: geocodeResult.geometry,
+                    types: geocodeResult.types,
+                  })
+                })
+            } else {
+              // No place_id, just use geocoding data
+              setPlaceData({
+                formatted_address: geocodeResult.formatted_address,
+                geometry: geocodeResult.geometry,
+                types: geocodeResult.types,
+              })
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching nearby place:", error)
+        })
+        .finally(() => {
+          setIsLoadingPlaceData(false)
+        })
     }
   }, [pin, open])
 
@@ -89,14 +172,14 @@ export function PinViewDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{pin.name}</DialogTitle>
             <DialogDescription>
               Pin details and location information
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1">
             {pin.description && (
               <div>
                 <p className="text-sm text-muted-foreground">{pin.description}</p>
@@ -117,8 +200,8 @@ export function PinViewDialog({
 
             {(placeData || isLoadingPlaceData) && (
               <>
-                <Separator />
-                <div className="space-y-3">
+                <Separator className="my-4" />
+                <div className="space-y-3 bg-muted/30 p-3 rounded-lg border">
                   {isLoadingPlaceData ? (
                     <div className="text-sm text-muted-foreground">Loading place details...</div>
                   ) : (
@@ -156,7 +239,7 @@ export function PinViewDialog({
                           </div>
                           {placeData.opening_hours.weekday_text && (
                             <div className="pl-6 space-y-0.5">
-                              {placeData.opening_hours.weekday_text.slice(0, 3).map((day: string, idx: number) => (
+                              {placeData.opening_hours.weekday_text.map((day: string, idx: number) => (
                                 <p key={idx} className="text-xs text-muted-foreground">{day}</p>
                               ))}
                             </div>
@@ -164,14 +247,44 @@ export function PinViewDialog({
                         </div>
                       )}
 
-                      {placeData?.phone_number && (
+                      {placeData?.price_level !== undefined && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">Price:</span>
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4].map((level) => (
+                              <span
+                                key={level}
+                                className={`text-sm ${
+                                  level <= placeData.price_level
+                                    ? "text-foreground"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                $
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {placeData?.types && placeData.types.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {placeData.types.slice(0, 5).map((type: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {(placeData?.formatted_phone_number || placeData?.international_phone_number || placeData?.phone_number) && (
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground" />
                           <a
-                            href={`tel:${placeData.phone_number}`}
+                            href={`tel:${placeData.formatted_phone_number || placeData.international_phone_number || placeData.phone_number}`}
                             className="text-sm text-primary hover:underline"
                           >
-                            {placeData.phone_number}
+                            {placeData.formatted_phone_number || placeData.international_phone_number || placeData.phone_number}
                           </a>
                         </div>
                       )}
@@ -193,18 +306,28 @@ export function PinViewDialog({
 
                       {placeData?.reviews && placeData.reviews.length > 0 && (
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Recent Reviews</h4>
-                          <div className="space-y-2 max-h-32 overflow-y-auto">
-                            {placeData.reviews.slice(0, 2).map((review: any, idx: number) => (
+                          <h4 className="text-sm font-medium">Reviews ({placeData.reviews.length})</h4>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {placeData.reviews.slice(0, 5).map((review: any, idx: number) => (
                               <div key={idx} className="text-xs space-y-1 border-l-2 border-border pl-2">
                                 <div className="flex items-center gap-1">
                                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                   <span className="font-medium">{review.rating}</span>
                                   <span className="text-muted-foreground">· {review.author_name}</span>
+                                  {review.time && (
+                                    <span className="text-muted-foreground">
+                                      · {new Date(review.time * 1000).toLocaleDateString()}
+                                    </span>
+                                  )}
                                 </div>
-                                <p className="text-muted-foreground line-clamp-2">{review.text}</p>
+                                <p className="text-muted-foreground">{review.text}</p>
                               </div>
                             ))}
+                            {placeData.reviews.length > 5 && (
+                              <p className="text-xs text-muted-foreground text-center pt-2">
+                                Showing 5 of {placeData.reviews.length} reviews
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -215,13 +338,21 @@ export function PinViewDialog({
             )}
 
             {!placeData && !isLoadingPlaceData && (
-              <div className="text-sm text-muted-foreground">
-                <p>Latitude: {Number(pin.latitude).toFixed(6)}</p>
-                <p>Longitude: {Number(pin.longitude).toFixed(6)}</p>
-              </div>
+              <>
+                <Separator className="my-4" />
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p>Latitude: {Number(pin.latitude).toFixed(6)}</p>
+                      <p>Longitude: {Number(pin.longitude).toFixed(6)}</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-4 shrink-0">
             {canEdit && (
               <Button
                 type="button"
