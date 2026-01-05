@@ -24,6 +24,7 @@ import { GoogleLocationSearch } from "@/components/pins/google-location-search"
 import { Separator } from "@/components/ui/separator"
 import { MapPin, Star, Clock, Phone, Globe, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { TimePicker } from "@/components/ui/time-picker"
 
 interface Category {
   id: string
@@ -235,12 +236,10 @@ export function PinDialog({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="time">Time</Label>
-                  <Input
-                    id="time"
-                    type="time"
+                  <TimePicker
                     value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    disabled={!day}
+                    onChange={setTime}
+                    disabled={!day || day === "none"}
                   />
                 </div>
               </div>

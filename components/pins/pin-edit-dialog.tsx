@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { GoogleLocationSearch } from "@/components/pins/google-location-search"
+import { TimePicker } from "@/components/ui/time-picker"
 
 interface Category {
   id: string
@@ -236,13 +237,10 @@ export function PinEditDialog({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-time">Time</Label>
-                  <Input
-                    id="edit-time"
-                    type="time"
+                  <TimePicker
                     value={time}
-                    onChange={(e) => setTime(e.target.value)}
+                    onChange={setTime}
                     disabled={!day || day === "none"}
-                    placeholder={day ? "Select time" : "Select day first"}
                   />
                 </div>
               </div>
