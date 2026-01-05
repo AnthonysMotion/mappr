@@ -632,10 +632,36 @@ function MapControls({
           setWaitingForLocation(false);
         },
         (error) => {
-          console.error("Error getting location:", error);
+          let errorMessage = "Unable to get your location";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location access denied. Please enable location permissions in your browser settings.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information unavailable.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out. Please try again.";
+              break;
+            default:
+              errorMessage = "An unknown error occurred while getting your location.";
+              break;
+          }
+          console.error("Error getting location:", errorMessage, {
+            code: error.code,
+            message: error.message,
+          });
           setWaitingForLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      setWaitingForLocation(false);
     }
   }, [map, onLocate]);
 
