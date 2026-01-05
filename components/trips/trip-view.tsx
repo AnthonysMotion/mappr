@@ -352,6 +352,18 @@ export function TripView({
     return days
   })()
 
+  // Convert 24-hour time to 12-hour format with AM/PM
+  const formatTime12Hour = (time24: string | null): string => {
+    if (!time24) return ""
+    
+    const [hours, minutes] = time24.split(":").map(Number)
+    const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
+    const ampm = hours < 12 ? "AM" : "PM"
+    const mins = minutes.toString().padStart(2, "0")
+    
+    return `${hour12}:${mins} ${ampm}`
+  }
+
   // Group pins by day and sort by time
   const pinsByDay = (() => {
     const grouped: Record<number, Pin[]> = {}
@@ -711,7 +723,7 @@ export function TripView({
                                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                           {pin.time && (
                                             <span className="text-xs font-medium text-muted-foreground">
-                                              {pin.time}
+                                              {formatTime12Hour(pin.time)}
                                             </span>
                                           )}
                                           {category && (
