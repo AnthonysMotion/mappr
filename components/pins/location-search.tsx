@@ -56,7 +56,7 @@ export function LocationSearch({ onLocationSelect, disabled, className }: Locati
     debounceRef.current = setTimeout(async () => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=10&addressdetails=1`,
           {
             headers: {
               "User-Agent": "Mappr Trip Planner", // Nominatim requires a user agent
@@ -155,7 +155,7 @@ export function LocationSearch({ onLocationSelect, disabled, className }: Locati
 
       {/* Dropdown results */}
       {isOpen && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none shadow-lg max-h-[80vh] overflow-y-auto">
           {results.map((result, index) => (
             <button
               key={result.place_id}

@@ -386,8 +386,8 @@ export function InteractiveMapDemo() {
         </Map>
 
         <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center gap-3">
-          <Card className="rounded-none">
-            <CardContent className="p-2.5">
+          <Card className="rounded-none overflow-visible">
+            <CardContent className="p-2.5 overflow-visible">
               <LocationSearch
                 onLocationSelect={handleLocationSelect}
               />

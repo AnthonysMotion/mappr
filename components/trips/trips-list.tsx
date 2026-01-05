@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Calendar, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { Calendar, MoreVertical, Edit, Trash2, Search, X } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import {
   DropdownMenu,
@@ -46,8 +47,36 @@ export function TripsList({ trips: initialTrips }: TripsListProps) {
   const [trips, setTrips] = useState(initialTrips)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tripToDelete, setTripToDelete] = useState<Trip | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
   const supabase = createClient()
+
+  // Filter trips based on search query
+  const filteredTrips = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return trips
+    }
+
+    const query = searchQuery.toLowerCase()
+    return trips.filter((trip) => {
+      const nameMatch = trip.name.toLowerCase().includes(query)
+      const descriptionMatch = trip.description?.toLowerCase().includes(query) || false
+      const labelMatch = trip.label?.toLowerCase().includes(query) || false
+      
+      // Also search in formatted dates
+      let dateMatch = false
+      if (trip.start_date) {
+        const startDateStr = format(parseISO(trip.start_date), "MMMM d, yyyy").toLowerCase()
+        dateMatch = startDateStr.includes(query)
+      }
+      if (trip.end_date) {
+        const endDateStr = format(parseISO(trip.end_date), "MMMM d, yyyy").toLowerCase()
+        dateMatch = dateMatch || endDateStr.includes(query)
+      }
+
+      return nameMatch || descriptionMatch || labelMatch || dateMatch
+    })
+  }, [trips, searchQuery])
 
   const handleDelete = async () => {
     if (!tripToDelete) return
@@ -76,8 +105,46 @@ export function TripsList({ trips: initialTrips }: TripsListProps) {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {trips.map((trip) => (
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search trips by name, description, label, or date..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground mt-2">
+            {filteredTrips.length} {filteredTrips.length === 1 ? "trip" : "trips"} found
+          </p>
+        )}
+      </div>
+
+      {/* Results */}
+      {filteredTrips.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <p className="text-muted-foreground mb-4">No trips found matching "{searchQuery}"</p>
+            <Button variant="outline" onClick={() => setSearchQuery("")}>
+              Clear search
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredTrips.map((trip) => (
           <Card key={trip.id} className="hover:bg-accent/5 transition-colors h-full relative">
             <CardHeader>
               <div className="flex items-start justify-between gap-2">
@@ -165,8 +232,9 @@ export function TripsList({ trips: initialTrips }: TripsListProps) {
               </Link>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

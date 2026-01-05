@@ -386,11 +386,11 @@ export function TripView({
           </ClickableMap>
           {canEdit && (
             <div className="absolute top-4 left-4 z-10 w-96 max-w-[calc(100%-2rem)]">
-              <Card>
+              <Card className="overflow-visible">
                 <CardHeader>
                   <CardTitle className="text-sm">Search for a location</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 overflow-visible">
                   <LocationSearch
                     onLocationSelect={handleLocationSearch}
                     disabled={!canEdit}
