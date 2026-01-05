@@ -44,7 +44,7 @@ const POPULAR_ICONS = [
   "Theater",
   "Church",
   "Store",
-  "Bank",
+  "Building2",
   "Hospital",
   "School",
   "Zap",

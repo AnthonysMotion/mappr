@@ -14,12 +14,12 @@ interface TimePickerProps {
 
 export function TimePicker({ value, onChange, disabled, className }: TimePickerProps) {
   // Parse 24-hour time to 12-hour format
-  const parseTime = (timeStr: string) => {
+  const parseTime = (timeStr: string): { hours: number; minutes: number; ampm: "AM" | "PM" } => {
     if (!timeStr) return { hours: 12, minutes: 0, ampm: "AM" }
     
     const [hours, minutes] = timeStr.split(":").map(Number)
     const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
-    const ampm = hours < 12 ? "AM" : "PM"
+    const ampm: "AM" | "PM" = hours < 12 ? "AM" : "PM"
     
     return { hours: hour12, minutes: minutes || 0, ampm }
   }
