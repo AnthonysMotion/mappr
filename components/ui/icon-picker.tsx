@@ -94,30 +94,32 @@ export function IconPicker({ value, onChange, label = "Icon", className }: IconP
 
   return (
     <div className={cn("space-y-2", className)}>
-      <label className="text-sm font-medium">{label}</label>
+      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        {label}
+      </label>
       <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="outline"
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2"
+          className="w-full justify-start flex items-center gap-2"
         >
           {SelectedIcon ? (
             <>
               <SelectedIcon className="h-4 w-4" />
-              <span className="text-xs">{value}</span>
+              <span className="text-sm">{value}</span>
             </>
           ) : (
-            <span>Select icon</span>
+            <span className="text-muted-foreground">Select icon</span>
           )}
         </Button>
         {value && (
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onChange(null)}
-            className="h-8 w-8 p-0"
+            className="h-10 w-10 shrink-0"
           >
             ×
           </Button>

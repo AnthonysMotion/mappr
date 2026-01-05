@@ -23,6 +23,7 @@ import {
 import { GoogleLocationSearch } from "@/components/pins/google-location-search"
 import { Separator } from "@/components/ui/separator"
 import { MapPin, Star, Clock, Phone, Globe, ExternalLink } from "lucide-react"
+import * as LucideIcons from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { TimePicker } from "@/components/ui/time-picker"
 import { IconPicker } from "@/components/ui/icon-picker"
@@ -203,10 +204,27 @@ export function PinDialog({
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
+                          {category.icon && category.icon in LucideIcons ? (
+                            (() => {
+                              const IconComponent = LucideIcons[category.icon as keyof typeof LucideIcons] as any
+                              return IconComponent ? (
+                                <IconComponent
+                                  className="h-3 w-3"
+                                  style={{ color: category.color }}
+                                />
+                              ) : (
+                                <div
+                                  className="h-3 w-3 rounded-full"
+                                  style={{ backgroundColor: category.color }}
+                                />
+                              )
+                            })()
+                          ) : (
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                          )}
                           {category.name}
                         </div>
                       </SelectItem>

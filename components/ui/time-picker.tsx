@@ -203,14 +203,14 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
   }
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-1.5", className)}>
       {/* Hours */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-0.5">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-b-none"
+          className="h-5 w-full rounded-b-none rounded-t-md hover:bg-accent"
           onClick={incrementHours}
           disabled={disabled}
         >
@@ -225,7 +225,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           onBlur={handleHoursBlur}
           onKeyDown={handleHoursKeyDown}
           onFocus={(e) => e.target.select()}
-          className="w-12 h-10 border border-border bg-background text-lg font-mono text-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          className="w-14 h-8 border-input bg-transparent text-xs font-mono text-center focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 rounded-none border px-2 py-1 transition-colors outline-none disabled:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
           maxLength={2}
           disabled={disabled}
         />
@@ -233,7 +233,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-t-none"
+          className="h-5 w-full rounded-t-none rounded-b-md hover:bg-accent"
           onClick={decrementHours}
           disabled={disabled}
         >
@@ -241,15 +241,15 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
         </Button>
       </div>
 
-      <span className="text-xl font-bold mt-4">:</span>
+      <span className="text-sm font-medium text-muted-foreground">:</span>
 
       {/* Minutes */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-0.5">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-b-none"
+          className="h-5 w-full rounded-b-none rounded-t-md hover:bg-accent"
           onClick={incrementMinutes}
           disabled={disabled}
         >
@@ -264,7 +264,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           onBlur={handleMinutesBlur}
           onKeyDown={handleMinutesKeyDown}
           onFocus={(e) => e.target.select()}
-          className="w-12 h-10 border border-border bg-background text-lg font-mono text-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          className="w-14 h-8 border-input bg-transparent text-xs font-mono text-center focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 rounded-none border px-2 py-1 transition-colors outline-none disabled:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
           maxLength={2}
           disabled={disabled}
         />
@@ -272,7 +272,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-t-none"
+          className="h-5 w-full rounded-t-none rounded-b-md hover:bg-accent"
           onClick={decrementMinutes}
           disabled={disabled}
         >
@@ -281,12 +281,12 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
       </div>
 
       {/* AM/PM */}
-      <div className="flex flex-col items-center ml-2">
+      <div className="flex flex-col items-center gap-0.5 ml-1">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-b-none"
+          className="h-5 w-full rounded-b-none rounded-t-md hover:bg-accent"
           onClick={toggleAmpm}
           disabled={disabled}
         >
@@ -296,7 +296,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           type="button"
           onClick={toggleAmpm}
           onKeyDown={handleAmpmKeyDown}
-          className="w-12 h-10 border border-border bg-background text-sm font-medium hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer"
+          className="w-14 h-8 border-input bg-transparent text-xs font-medium hover:bg-accent focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1 rounded-none border px-2 py-1 transition-colors outline-none disabled:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           disabled={disabled}
         >
           {ampm}
@@ -305,7 +305,7 @@ export function TimePicker({ value, onChange, disabled, className }: TimePickerP
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-8 rounded-t-none"
+          className="h-5 w-full rounded-t-none rounded-b-md hover:bg-accent"
           onClick={toggleAmpm}
           disabled={disabled}
         >

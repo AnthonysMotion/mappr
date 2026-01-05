@@ -23,6 +23,7 @@ import {
 import { GoogleLocationSearch } from "@/components/pins/google-location-search"
 import { TimePicker } from "@/components/ui/time-picker"
 import { IconPicker } from "@/components/ui/icon-picker"
+import * as LucideIcons from "lucide-react"
 
 interface Category {
   id: string
@@ -160,15 +161,15 @@ export function PinEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Edit Pin</DialogTitle>
           <DialogDescription>
             Update pin details and location
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name *</Label>
               <Input
@@ -201,10 +202,27 @@ export function PinEditDialog({
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
+                          {category.icon && category.icon in LucideIcons ? (
+                            (() => {
+                              const IconComponent = LucideIcons[category.icon as keyof typeof LucideIcons] as any
+                              return IconComponent ? (
+                                <IconComponent
+                                  className="h-3 w-3"
+                                  style={{ color: category.color }}
+                                />
+                              ) : (
+                                <div
+                                  className="h-3 w-3 rounded-full"
+                                  style={{ backgroundColor: category.color }}
+                                />
+                              )
+                            })()
+                          ) : (
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                          )}
                           {category.name}
                         </div>
                       </SelectItem>
@@ -212,7 +230,7 @@ export function PinEditDialog({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="text-sm text-muted-foreground py-2 px-3 border border-border rounded-none">
+                <div className="text-sm text-muted-foreground py-2 px-3 border border-border rounded-md bg-muted/50">
                   No categories available. Create one in the Categories tab.
                 </div>
               )}
@@ -262,13 +280,13 @@ export function PinEditDialog({
                 onLocationSelect={handleLocationSelect}
               />
               {location && (
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground mt-1.5">
                   Current: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                 </div>
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
